@@ -1,0 +1,37 @@
+{
+    "backgrounds": [
+        {
+            "geofence_audio": {
+                "id": 1,
+                "lat": 55.9494252,
+                "lon": -3.1197155,
+                "radius": 25,
+                "duration": 120000,
+                "transitions": [
+                    "ENTER",
+                    "EXIT"
+                ],
+                "track": "sleepaway",
+                "loop": false,
+                "vary_volume": true
+            }
+        },
+        {
+            "geofence_audio": {
+                "id": 1,
+                "lat": 55.950377,
+                "lon": -3.123854,
+                "radius": 100,
+                "duration": 120000,
+                "transitions": [
+                    "ENTER",
+                    "EXIT"
+                ],
+                "track": "factory",
+                "loop": false,
+                "vary_volume": true
+            }
+        }
+    ]
+}
+

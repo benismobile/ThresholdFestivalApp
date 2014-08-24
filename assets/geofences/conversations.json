@@ -1,0 +1,56 @@
+{
+    "conversations": [
+        {   
+		 "name": "RobotBob Convo 1A",
+            "geofence_audio": {
+                "id": 1,
+                "lat": 55.948407,
+                "lon": -3.121025,
+                "radius": 250,
+                "duration": 1200000,
+                "transitions": [
+                    "ENTER",
+                    "EXIT"
+                ],
+                "track": "convo1ablock1",
+                "loop": false,
+                "vary_volume": false,
+                "on_complete": {
+                    "dialog": {
+                        "options": [
+                            {
+                                "option": "I\u0027m from the other side of the Rift, pleased to meet you.",
+                                "audio": {
+                                    "id": 1,
+                                    "track": "convo1ablock4"
+                                }
+                            },
+                            {
+                                "option": "What\u0027s it to you Tin Man?",
+                                "audio": {
+                                    "id": 2,
+                                    "track": "convo1ablock2",
+						    "on_complete":{
+							  "audio": {
+							    "id":21,
+                                         "track":"convo1ablock4"
+							    	
+							   }
+							} 	 
+                                    
+                                }
+                            },
+                            {
+                                "option": "Just a visitor. Why are you smashing other robots?",
+                                "audio": {
+                                    "id": 3,
+                                    "track": "convo1ablock3"
+                                }
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    ]
+}
