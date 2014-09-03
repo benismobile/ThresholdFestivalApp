@@ -52,6 +52,7 @@
     <string name="get_location">Get Location</string>
 
     <string name="framemarkers">AR Image Capture</string>
+    <string name="switch_map">Switch over Game and Venue map</string>
 
     <string name="illegal_argument_exception">
         Illegal arguments: Latitude %1$.8f Longitude %2$.8f

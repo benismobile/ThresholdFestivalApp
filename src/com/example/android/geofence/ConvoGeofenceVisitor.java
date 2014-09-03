@@ -58,7 +58,7 @@ public class ConvoGeofenceVisitor implements IGeofenceVisitor, MediaPlayer.OnCom
       this.activeDialog = dialog ;
 
       PendingIntent pi = PendingIntent.getActivity(activity, 0,
-	   new Intent(activity, com.example.android.location.WebViewActivity.class),
+	   new Intent(activity, com.example.android.location.WebViewActivity.class).setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
       PendingIntent.FLAG_UPDATE_CURRENT);
       Notification notification = new Notification();
       notification.tickerText = "Dialog" ; 
@@ -81,6 +81,9 @@ public class ConvoGeofenceVisitor implements IGeofenceVisitor, MediaPlayer.OnCom
    
     // TODO onComplete
     Log.d(GeofenceUtils.APPTAG, "visiting geofenceAudio" ) ;
+
+    // TODO check if geofence is already registered
+    // if not go ahead and register it
 
     String track = geofenceAudio.getTrack() ;
     this.backgroundAudioService.playForeground(track, this, this) ;
@@ -140,14 +143,17 @@ public class ConvoGeofenceVisitor implements IGeofenceVisitor, MediaPlayer.OnCom
   @Override
   public void onCompletion(MediaPlayer mp)
   {
-	Log.d(GeofenceUtils.APPTAG, "MediaPlayer.OnCompletionListener.onComplete called") ;
-        if(mp!=null) mp.release() ;
-	mp = null ;
-	if(this.onComplete != null)
+	Log.d(GeofenceUtils.APPTAG, "ConvoGeofenceVisitor: MediaPlayer.OnCompletionListener.onComplete called") ;
+        if(mp!=null)
+        { 
+            this.backgroundAudioService.foregroundStopped() ;
+        }
+	
+        if(this.onComplete != null)
 	{
 	   this.onComplete.accept(this) ;
 	}
-	// TODO check this logic
+	// check this logic
 	this.onComplete = null ;
 
   }
@@ -163,5 +169,5 @@ public class ConvoGeofenceVisitor implements IGeofenceVisitor, MediaPlayer.OnCom
 
   // broadcast receiver to receive Dialog Option results
   // get the current Dialog option
-
+ 
 }

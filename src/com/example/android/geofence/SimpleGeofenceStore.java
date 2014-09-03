@@ -56,7 +56,25 @@ public class SimpleGeofenceStore {
        // make a defensive copy of geofenceIds HashSet
        HashSet<String> idsCopy = new HashSet<String>() ;
 
-       Set persistedIds = this.mPrefs.getStringSet("currentGeofenceIds", idsCopy) ;
+       Set persistedIds = null ; 
+ 
+       try
+       {
+
+           persistedIds = this.mPrefs.getStringSet("currentGeofenceIds", idsCopy) ;
+       }catch(NoSuchMethodError err)
+          {
+	      // getStringSet only for API 11 and above - use tokenised version instead until Gingerbread finally dies
+              String tokenizedIds = this.mPrefs.getString("currentGeofenceIds", "") ;
+              String[] splitIds =  tokenizedIds.split(":") ; 	
+              for(int i = 0 ; i < splitIds.length ; i++)
+	      {
+		 idsCopy.add(splitIds[i]) ;
+
+              }
+              return idsCopy ;
+          }
+
        if(persistedIds == null || persistedIds.size() < 1) 
        {
           Log.d(GeofenceUtils.APPTAG, "SimpleGeofenceStore: getGeofenceIds() could no persisted ids");      
@@ -215,8 +233,15 @@ public class SimpleGeofenceStore {
                 geofence.getTransitionType());
 
         this.geofenceIds.add(id) ;
-        editor.putStringSet("currentGeofenceIds", this.geofenceIds) ;
-
+        try
+        {
+           editor.putStringSet("currentGeofenceIds", this.geofenceIds) ;
+        }catch(NoSuchMethodError err)
+         {
+            // putStringSet API 11 and above so tokenize the set instead
+            String tokenizedIds =  tokenizeIds() ;
+            editor.putString("currentGeofenceIds", tokenizedIds ) ;
+         }
         // Commit the changes
         editor.commit();
     }
@@ -236,11 +261,36 @@ public class SimpleGeofenceStore {
 	if(this.geofenceIds.contains(id))
 	{
            this.geofenceIds.remove(id) ;
-           editor.putStringSet("currentGeofenceIds", this.geofenceIds) ;
-
+           try
+           {
+              editor.putStringSet("currentGeofenceIds", this.geofenceIds) ;
+           }catch(NoSuchMethodError err)
+            {
+		String tokenizedIds = tokenizeIds() ;
+                editor.putString("currentGeofenceIds", tokenizedIds) ;
+            }
 	}
         editor.commit();
     }
+
+
+    private String tokenizeIds()
+    {
+           
+            StringBuilder sb = new StringBuilder() ;
+ 	    for(Iterator<String> i = this.geofenceIds.iterator() ; i.hasNext(); )
+            {
+               String nextId = i.next() ;
+               sb.append(nextId) ;
+               if(i.hasNext()) 
+                   {    sb.append(":") ; } 
+            }
+
+            String tokenizedIds =  sb.toString() ;
+            return tokenizedIds ;
+     }
+    
+
 
     /**
      * Given a Geofence object's ID and the name of a field

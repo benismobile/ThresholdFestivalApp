@@ -15,18 +15,75 @@
 </head>
 <body>
 <div id='map'></div>
+<div id='legend-content'>
+  <div class='my-legend'>
+    <div class='legend-title'>Achievements</div>
+  </div>
+</div>
+<div>
+  <img src='../img/birdie.jpg'</img>
+</div>
+  
+
+<style type='text/css'>
+    .my-legend .legend-title {
+      text-align: left;
+      margin-bottom: 8px;
+      font-weight: bold;
+      font-size: 90%;
+      }
+    .my-legend .legend-scale ul {
+      margin: 0;
+      padding: 0;
+      float: left;
+      list-style: none;
+      }
+    .my-legend .legend-scale ul li {
+      display: block;
+      float: left;
+      width: 50px;
+      margin-bottom: 6px;
+      text-align: center;
+      font-size: 80%;
+      list-style: none;
+      }
+    .my-legend ul.legend-labels li span {
+      display: block;
+      float: left;
+      height: 48px;
+      width: 68px;
+      }
+    .my-legend .legend-source {
+      font-size: 70%;
+      color: #999;
+      clear: both;
+      }
+    .my-legend a {
+      color: #777;
+      }
+  </style>
+</div>
+
+
 <script>
 
 var map = L.mapbox.map('map', 'gradiustheguide.h3380imc')
     .setView([53.3956, -2.9783], 17);
 
+var imageUrl = '../img/ffmap.jpg' ;
+var imageBounds = [[53.392945, -2.984848], [53.398792, -2.976286]];
+
+var imgOverlay = L.imageOverlay(imageUrl, imageBounds).addTo(map);
+imgOverlay.setOpacity(0.8) ;
 var myIcon = L.icon({
 	iconSize: [30, 36],
-	iconUrl: '../img/Android_Robot_100.png'
+	iconUrl: '../img/astro2.png'
 });
 
 
 var marker = L.marker([53.3956, -2.9783], {icon: myIcon}).addTo(map);
+
+map.legendControl.addLegend(document.getElementById('legend-content').innerHTML);
 
 
 function getLocation() {
@@ -50,7 +107,7 @@ function onLocationUpdateP(latlonStr)
     marker.setLatLng(latlng) ;
 // or just go to Liverpool
   //  latlng = L.latLng(53.3956, -2.9783);
-  //   map.panTo(latlng);	        
+ //     map.panTo(latlng);	        
 	
 };
 

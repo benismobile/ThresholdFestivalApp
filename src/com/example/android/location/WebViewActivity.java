@@ -4,6 +4,8 @@ import android.app.Activity ;
 import android.os.Bundle ;
 import android.content.Intent ;
 import android.widget.EditText ;
+import android.view.ViewConfiguration ;
+
 import android.view.View;
 import android.webkit.WebView ;
 import android.annotation.SuppressLint ;
@@ -17,6 +19,7 @@ import android.view.MenuItem ;
 import android.view.MenuInflater ;
 import android.widget.Toast ;
 import android.text.TextUtils ;
+import android.app.NotificationManager ;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesClient;
 import com.google.android.gms.common.GooglePlayServicesUtil;
@@ -68,8 +71,12 @@ import com.example.android.geofence.Audio ;
 import com.example.android.geofence.Option ;
 import com.example.android.geofence.Convo ;
 import com.example.android.geofence.GeofenceAudio ;
+import com.example.android.geofence.GeofenceBuilding ;
+import com.example.android.geofence.Building ;
 import com.example.android.geofence.ConvoJSONParser ;
+import com.example.android.geofence.BuildingJSONParser ;
 import com.example.android.geofence.ConvoGeofenceVisitor ;
+import com.example.android.geofence.BuildingGeofenceVisitor ;
 import com.example.android.geofence.IGeofenceVisitable ;
 import com.example.android.geofence.IGeofenceVisitor ;
 import com.example.android.geofence.ConvoDialogOnClickListener ;
@@ -90,7 +97,7 @@ import android.os.AsyncTask ;
 import java.io.IOException ;
 import java.text.ParseException ;
 import java.util.Iterator ;
-
+import android.webkit.WebViewClient ;
 
 public class WebViewActivity extends ActionBarActivity
 implements 
@@ -103,6 +110,8 @@ implements
 
 {
    private boolean mIsInFront ;
+   private int mActiveMap = 0 ;
+   private boolean mAchievementsShowing = false ;
    private LocationClient mLocationClient;
    private LocationRequest mLocationRequest;
    boolean mUpdatesRequested = false;
@@ -143,10 +152,13 @@ implements
 
    // Store the list of geofences to remove
    private List<String> mGeofenceIdsToRemove;
-    
+   private int uuidHash ;
+   private int infected ;
+   private String uuid ; 
    private SoundPool mSoundPool ;
    private HashMap mSoundMap ;
    private HashMap<String, Convo> mConvos ;
+   private HashMap<String, Building> mBuildings ;
    private HashSet mSoundLoadedMap ;
    private MediaPlayer mPlayer ;  
    private MediaPlayer mPlayer2 ;  
@@ -211,7 +223,7 @@ implements
          
          Log.d(GeofenceUtils.APPTAG, "WebViewActivity: accept visitor: show Dialog:" + mActiveDialog ) ;
          GeofenceDialogFragment dialog =  GeofenceDialogFragment.newInstance(mActiveDialog) ; 
-         dialog.show(getFragmentManager(), "GeofenceEventFragment") ;
+         dialog.show(getSupportFragmentManager(), "GeofenceEventFragment") ;
          mActiveDialogFragment = dialog ;
 	 mActiveDialogShowing = true ;
 	 mEditor.putBoolean("mActiveDialogShowing", true ) ;
@@ -248,6 +260,24 @@ implements
 
    }
 
+   public int getUniqueUserId()
+   {
+
+        return mPrefs.getInt("uuidHash", -1) ;
+   }
+
+   public int getInfected()
+   {
+       return mPrefs.getInt("infected", 0) ;
+
+   }
+  
+   public void setInfected(int infected) 
+   {
+	this.infected = infected ;
+        mEditor.putInt("infected", infected) ;
+        mEditor.commit() ;	
+   } 
 
    @SuppressLint("NewApi")
    @Override
@@ -272,7 +302,7 @@ implements
     // WHATEVER YOU DO: DONT USE setAllowFileAccess* ON GINGERBREAB - Causes nasty crach
     // BUT needed to get the local gpx loading to work
      webview.addJavascriptInterface(new WebAppInterface(this),"Android");
-     webview.loadUrl("file:///android_asset/html/threshold.html");
+     webview.loadUrl("file:///android_asset/html/threshold2.html");
 
     mLocationClient = new LocationClient(this, this, this);
     mLocationRequest = LocationRequest.create();
@@ -289,6 +319,15 @@ implements
    mEditor.putBoolean(LocationUtils.KEY_UPDATES_REQUESTED, mUpdatesRequested);
    mEditor.commit();
 
+   // is uuid already generated?
+
+   this.uuidHash = mPrefs.getInt("uuidHash", -1) ;
+   if(this.uuidHash== -1)
+   {    this.uuidHash = java.util.UUID.randomUUID().hashCode() ;
+   	// mEditor.putString("uuid", this.uuid) ;
+   	mEditor.putInt("uuidHash", this.uuidHash) ;
+   	mEditor.commit() ;
+  }
 
    // Create a new broadcast receiver to receive updates from the listeners and service
      mBroadcastReceiver = new GeofenceSampleReceiver();
@@ -336,15 +375,31 @@ implements
         });
        
         mConvos = new HashMap<String, Convo>() ;
-
+        mBuildings = new HashMap<String, Building>() ;
       
         
      	Intent startAudioIntent = new Intent(this, com.example.android.location.BackgroundAudioService.class);
         bindService(startAudioIntent, mBackgroundAudioServiceConnection, Context.BIND_AUTO_CREATE);
         restoreInstanceState(savedInstanceState) ;
-
+  
+      // getOverflowMenu() ;
 
    } // ends onCreate
+
+
+   private void getOverflowMenu() {
+
+     try {
+        ViewConfiguration config = ViewConfiguration.get(this);
+        java.lang.reflect.Field menuKeyField = ViewConfiguration.class.getDeclaredField("sHasPermanentMenuKey");
+        if(menuKeyField != null) {
+            menuKeyField.setAccessible(true);
+            menuKeyField.setBoolean(config, false);
+        }
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+  }
 
    @Override
    public void onPrepared(MediaPlayer player)
@@ -364,6 +419,9 @@ implements
         unbindService(mBackgroundAudioServiceConnection);
         mIsBound = false;
     }
+
+    stopUpdates();
+
 
    /* 
     HashSet<String> gfIds = mGeofencePrefs.getGeofenceIds() ;
@@ -391,29 +449,13 @@ implements
    {
     Log.d(GeofenceUtils.APPTAG, "onStop() called" ) ;
 
+    mEditor.putInt("infected", this.infected) ;
+    mEditor.commit() ; 
     super.onStop() ;
 
 
   }
   
-/*
-   @Override
-   public void onStop() {
-
-     // If the client is connected
-  //   if (mLocationClient.isConnected())
-  //   {
-  //      stopPeriodicUpdates();
-  //   }
-
-     // After disconnect() is called, the client is considered "dead".
-//      mLocationClient.disconnect();
-     
-     super.onStop();
-   } // end onStop()
-
-*/
-
     @Override
     public void onPause() {
 
@@ -423,6 +465,8 @@ implements
 	mIsInFront = false ;
         // Save the current setting for updates
         mEditor.putBoolean(LocationUtils.KEY_UPDATES_REQUESTED, mUpdatesRequested);
+        mEditor.commit();
+        mEditor.putInt("infected", this.infected) ;
         mEditor.commit();
 
         // TODO unregister broadcast receiver?
@@ -473,6 +517,20 @@ implements
 
       }
    
+      ArrayList<String> buildingStringArray = new ArrayList<String>() ;
+
+      if (mBuildings != null && mBuildings.size() > 0)
+      {
+         for( Iterator<Building> i = mBuildings.values().iterator() ; i.hasNext();)
+	 {
+	    Building building = i.next() ;
+            Log.d(GeofenceUtils.APPTAG, "onSavedInstanceState saving building: " + building.getName() ) ;
+            buildingStringArray.add(building.toJSONString()) ;
+	 }
+	 savedInstanceState.putStringArrayList("mBuildings", buildingStringArray) ;
+// TODO also store in mPrefs? Perhaps not necessary as read from file source anyway. 
+      }
+
       if(mActiveConvo != null)
       {
          savedInstanceState.putString("mActiveConvo", mActiveConvo.toJSONString() ) ;
@@ -489,14 +547,15 @@ implements
          Log.d(GeofenceUtils.APPTAG, "onSavedInstanceState saving mActiveDialog: " ) ;
       }
       
-    
+     mEditor.putInt("infected", this.infected) ;
+     mEditor.commit() ; 
      super.onSaveInstanceState(savedInstanceState);
    }
 
 
    public void onRestoreInstanceState(Bundle savedInstanceState) {
     	super.onRestoreInstanceState(savedInstanceState);
-	restoreInstanceState(savedInstanceState) ;
+	// restoreInstanceState(savedInstanceState) ;
    } 
 
    private void restoreInstanceState(Bundle savedInstanceState)
@@ -530,7 +589,7 @@ implements
        }
 
        */
-
+/*
        // TODO get mConvos from getJSONString and parse from JSON Str using getStingArray
         ArrayList<String> convoStringArray = savedInstanceState.getStringArrayList("mConvos");
         if(convoStringArray != null && convoStringArray.size() > 0  )
@@ -578,7 +637,7 @@ implements
 	{
            Log.w(GeofenceUtils.APPTAG, "restoreInstanceState: Could not parse mActiveDialog from string" + mActiveConvoStr ) ;
 	}
-
+*/
    }
 
    @Override
@@ -602,6 +661,11 @@ implements
          Log.d(GeofenceUtils.APPTAG, "onResume: KEY_UPDATES_NOT_REQUESTED") ;
          mEditor.putBoolean(LocationUtils.KEY_UPDATES_REQUESTED, false);
          mEditor.commit();
+      }
+
+      if(mPrefs.contains("infected"))
+      {
+	  this.infected = mPrefs.getInt("infected", 0) ;
       }
 
 
@@ -629,7 +693,7 @@ implements
 
          }catch(ParseException e)
 	   {
-              Log.w(GeofenceUtils.APPTAG, "restoreInstanceState: Could not parse mActiveDialog from string" + mActiveDialogStr ) ;
+              Log.w(GeofenceUtils.APPTAG, "onResume: Could not parse mActiveDialog from string" + mActiveDialogStr ) ;
 	   }
       }
       else
@@ -645,7 +709,7 @@ implements
          GeofenceDialogFragment dialog =  GeofenceDialogFragment.newInstance(mActiveDialog) ; 
          if(! mActiveDialogShowing)
 	 {
-	    dialog.show(getFragmentManager(), "GeofenceEventFragment") ;
+	    dialog.show(getSupportFragmentManager(), "GeofenceEventFragment") ;
             mActiveDialogFragment = dialog ;
 	 }
 
@@ -700,10 +764,10 @@ implements
 		   Log.d(GeofenceUtils.APPTAG, "onResume restore geofence " + id + " from mGeofencePrefs") ; 
 		   SimpleGeofence gf = mGeofencePrefs.getGeofence(id) ;
 
-	           if(gf.getExpirationTime() < nowMillis)
+	           if(gf == null || gf.getExpirationTime() < nowMillis)
 		   {
 		      
-		      Log.d(GeofenceUtils.APPTAG, "onResume geofence " + id + " had expired so clear from mGeofencePrefs") ; 
+		      Log.d(GeofenceUtils.APPTAG, "onResume geofence " + id + " had expired (or is null) so clear from mGeofencePrefs") ; 
 	              mGeofencePrefs.clearGeofence(id) ;
 
 		   }
@@ -735,14 +799,16 @@ implements
 	  if (networkInfo != null && networkInfo.isConnected()) 
 	  {
 
-         //  new DownloadJSONTask().execute("https://dl.dropboxusercontent.com/u/26331961/kai_backgrounds.json");
 	
-        // 	 new DownloadBackgroundAudioJSONTask().execute("https://dl.dropboxusercontent.com/u/58768795/ForgottonFutures/backgroundsdev.json");
+         	 new DownloadBackgroundAudioJSONTask().execute("https://dl.dropboxusercontent.com/u/58768795/ForgottonFutures/backgroundsdev.json");
+         	 new DownloadConversationsAudioJSONTask().execute("https://dl.dropboxusercontent.com/u/58768795/ForgottonFutures/conversations.json");
+         	 new DownloadBuildingsJSONTask().execute("https://dl.dropboxusercontent.com/u/58768795/ForgottonFutures/buildings.json");
 
                    
-             new DownloadBackgroundAudioJSONTask().execute("https://dl.dropboxusercontent.com/u/26331961/kai_backgrounds.json");
+//           new DownloadBackgroundAudioJSONTask().execute("https://dl.dropboxusercontent.com/u/26331961/kai_backgrounds.json");
 
-             new DownloadConversationsAudioJSONTask().execute("https://dl.dropboxusercontent.com/u/58768795/ForgottonFutures/conversations.json");
+  //         new DownloadConversationsAudioJSONTask().execute("https://dl.dropboxusercontent.com/u/26331961/conversations.json");
+
           } 
 	  else 
 	  {
@@ -757,6 +823,26 @@ implements
        {
           Log.e(GeofenceUtils.APPTAG, "onResume: mCurrentGeofences == null " ) ;
 
+       }
+    
+       NotificationManager notificationManager = (NotificationManager)getSystemService(this.NOTIFICATION_SERVICE);
+       notificationManager.cancelAll();
+
+
+       Intent callingIntent = this.getIntent() ;
+       String bird = callingIntent.getStringExtra("bird");
+       Log.d(GeofenceUtils.APPTAG, "get string extra bird" + bird + " from intent " + callingIntent) ;
+       if(bird != null && !"-1".equals(bird))
+       {
+          Log.d(GeofenceUtils.APPTAG, "recovered bird" ) ;
+          callingIntent.putExtra("bird","-1" );	
+          int countBirds = mPrefs.getInt("countbirds", 0 ) ;
+          countBirds++ ;
+
+          Log.d(GeofenceUtils.APPTAG, "countBirds:" + countBirds ) ;
+          mEditor.putInt("countbirds", countBirds) ;
+          mEditor.commit() ;
+          onBirdCaptured() ; 
        }
 
        mLocationClient.connect();
@@ -798,26 +884,139 @@ public boolean onOptionsItemSelected(MenuItem item) {
             return true;
 	case R.id.framemarkers:
 	    framemarkers();
+            return true ;
+        case R.id.switch_map:
+	    switchMap() ;
+            return true ;
+        case R.id.toggle_achievements:
+            toggleAchievements() ;
+            return true ;
         default:
             return super.onOptionsItemSelected(item);
     }
 }
 
+public void toggleAchievements()
+{
+   if(mAchievementsShowing && mActiveMap == 1)
+   {
+      webview.loadUrl("javascript:removeLegend();");
+      mAchievementsShowing = false ;
+      return ;
+   }
+   
+   if(!mAchievementsShowing && mActiveMap == 1)
+   {
+      webview.loadUrl("javascript:showLegend();");
+      mAchievementsShowing = true ;
+      int countBirds = mPrefs.getInt("countbirds", 0 ) ;
+      Log.d(GeofenceUtils.APPTAG, "toggleAchievements countBirds:" + countBirds) ;
+      for(int i = 0 ; i < countBirds ; i++ )
+      {
+         webview.loadUrl("javascript:addBird();");
+      }
+      if(getInfected() > 0 ) 
+      {
+         webview.loadUrl("javascript:addDisease('" + getUniqueUserId() + "');");
+      }
+      return ;
+   }
+
+   if(!mAchievementsShowing && mActiveMap == 0)
+   {
+           webview.setWebViewClient(new WebViewClient() {
+
+           public void onPageFinished(WebView view, String url) {
+                  view.loadUrl("javascript:showLegend();");
+                  mAchievementsShowing = true ;
+                  int countBirds = mPrefs.getInt("countbirds", 0 ) ;
+                  Log.d(GeofenceUtils.APPTAG, "onBirdCaptured.WebViewClient countBirds:" + countBirds) ;
+                  for(int i = 0 ; i < countBirds ; i++ )
+                  {
+                      view.loadUrl("javascript:addBird();");
+                  }
+                  if(getInfected() > 0 ) 
+                  {
+                    webview.loadUrl("javascript:addDisease('" + getUniqueUserId() + "');");
+                  }
+      return ;
+
+            }
+           });
+      switchMap() ;
+      return ;
+   }
+
+   if(mAchievementsShowing && mActiveMap == 0)
+   {
+      return ;
+   }
+}
 
 
+public void onBirdCaptured()
+{
+     Toast.makeText(this,"Congratulations you captured a bird for Robot Bob",Toast.LENGTH_SHORT).show();
+      
+      if(mActiveMap == 0 )
+      { 
+           webview.setWebViewClient(new WebViewClient() {
+
+           public void onPageFinished(WebView view, String url) {
+                  view.loadUrl("javascript:showLegend();");
+                  mAchievementsShowing = true ;
+                  int countBirds = mPrefs.getInt("countbirds", 0 ) ;
+                  Log.d(GeofenceUtils.APPTAG, "onBirdCaptured.WebViewClient countBirds:" + countBirds) ;
+                  for(int i = 0 ; i < countBirds ; i++ )
+                  {
+                      view.loadUrl("javascript:addBird();");
+                  }
+                  // TODO if count bird == 3 play 
+            }
+           });
+           switchMap() ;
+           return ;
+      }
+      webview.loadUrl("javascript:showLegend();");
+      mAchievementsShowing = true ;
+      int countBirds = mPrefs.getInt("countbirds", 0 ) ;
+      Log.d(GeofenceUtils.APPTAG, "onBirdCaptured countBirds:" + countBirds) ;
+      for(int i = 0 ; i < countBirds ; i++ )
+      {
+         webview.loadUrl("javascript:addBird();");
+      }
+
+}
+
+public void switchMap()
+{
+     if(mActiveMap == 0)
+     {
+        webview.loadUrl("file:///android_asset/html/threshold3.html");
+        Toast.makeText(this,"Game Map",Toast.LENGTH_SHORT).show();
+        mActiveMap = 1 ;
+     }
+     else if(mActiveMap == 1)
+     {
+        webview.loadUrl("file:///android_asset/html/threshold2.html");
+        Toast.makeText(this,"Venue Map",Toast.LENGTH_SHORT).show();
+        mActiveMap = 0 ; 
+     }
+
+}
 
 public void getLocation()
 {
 
-// Toast.makeText(this,"Android.getLocation called",Toast.LENGTH_SHORT).show();
-webview.loadUrl("javascript:getLocation();");
+    webview.loadUrl("javascript:getLocation();");
 
 }
 
 public void framemarkers()
 {
-
-  Toast.makeText(this,"Framemarkers called",Toast.LENGTH_SHORT).show();
+ 
+  Log.d(GeofenceUtils.APPTAG, "Framemarkers called" ) ;
+  // Toast.makeText(this,"Framemarkers called",Toast.LENGTH_SHORT).show();
   Intent intent = new Intent(this, com.example.android.framemarkers.FrameMarkers.class);
 
   startActivity(intent);
@@ -895,10 +1094,17 @@ public void framemarkers()
        		  if(mBackgroundAudioService!=null)
 		  {
 		     if(varyVolume)
-		     {
+		     { // note changeVolume will duck if forground playing
 	               mBackgroundAudioService.changeVolume(trackID, volume) ;
-		       // Log.d(GeofenceUtils.APPTAG, "change volume for track " + trackID + " to:" + volume);
+		       Log.d(GeofenceUtils.APPTAG, "change or duck volume for track " + trackID + " to:" + volume);
 		     }
+                     else
+                     {
+                       volume = 0.9f ;
+		       Log.d(GeofenceUtils.APPTAG, "not vary volume for track " + trackID + " at default volume:" + volume);
+	               mBackgroundAudioService.changeVolume(trackID, volume) ;
+
+                     }
 	          }
 
 	       }
@@ -921,16 +1127,23 @@ private float getVolumeFromDistanceBetween(Location location, SimpleGeofence sgf
   float[] distanceCalc = new float[2];
   float radius = sgf.getRadius() ;
   location.distanceBetween(latitude, longitude, gfLatitude, gfLongitude, distanceCalc) ;
+ 
+
   if(distanceCalc.length > 0 )
   {
-     	// Log.d(GeofenceUtils.APPTAG, "onLocationChanged: distance to GF " + sgf.getId() + " is: " + distanceCalc[0] ) ;
+     	 Log.d(GeofenceUtils.APPTAG, "onLocationChanged: distance to GF " + sgf.getId() + " is: " + distanceCalc[0] ) ;
+        if(distanceCalc[0] < 25) return 0.9f ;
+        if(distanceCalc[0] < 40) return 0.65f ;
+        if(distanceCalc[0] < 75) return 0.5f ;
+        if(distanceCalc[0] < 100) return 0.4f ; 
+
         float maxLog = (float) Math.log10(radius)  ;
 	float logDist = (float) Math.log10((distanceCalc[0]  + 1))  ; // add 1 to ensure vol always > 0
         float volumeScalar = 1 - ( logDist / maxLog )  ;
         return volumeScalar ;
 	                
   }
-  return 0.05f ;
+  return 0.35f ;
 
 }
 
@@ -959,15 +1172,63 @@ private boolean servicesConnected() {
     @Override
     public void onConnected(Bundle dataBundle)
     {																								
-       Toast.makeText(this, "WebViewActivity On Connected called ",Toast.LENGTH_SHORT).show();
-       if(mUpdatesRequested)
-       {
-          startPeriodicUpdates() ;
-       }
+    //    Toast.makeText(this, "WebViewActivity On Connected called ",Toast.LENGTH_SHORT).show();
+          startUpdates() ;
 
      
        Log.d(GeofenceUtils.APPTAG, "WebViewActivity:onConnected " + mCurrentGeofences ) ;
     }
+
+     private void addBuildingsGeofences(String buildingsJSONStr)
+     {
+        Log.d(GeofenceUtils.APPTAG, "adding buildings geofences" ) ;
+        Building[] buildings ;
+        try
+        {
+           buildings = BuildingJSONParser.parseBuildingsArray(buildingsJSONStr) ;
+        }catch(ParseException e) 
+         {
+	   Log.e(GeofenceUtils.APPTAG, "Could not parse Buildings Array from String: " + buildingsJSONStr + " Caused by: " +  e.getMessage()) ;
+           Toast.makeText(this, "Could not parse buildings.json file",  Toast.LENGTH_LONG).show();
+           return ; 
+
+         }
+         ArrayList buildingGeofences = new ArrayList<Geofence>(); 
+         for(int i = 0 ; i < buildings.length ; i++)
+	 {
+            Building building = buildings[i] ;
+	    Log.d(GeofenceUtils.APPTAG, "processing building: " + building ) ;
+            String buildingName = building.getName() ;
+	    GeofenceBuilding gfBuilding = building.getGeofenceBuilding() ;
+	    String buildingId = Integer.toString(gfBuilding.getId()) ;
+
+            SimpleGeofence geofence = new SimpleGeofence(
+            "BUILDING_" + buildingId ,
+            gfBuilding.getLatitude(),
+            gfBuilding.getLongitude(),  
+            gfBuilding.getRadius(), 
+            gfBuilding.getDuration(), // expiration time
+            gfBuilding.getTransitions() );
+
+            mBuildings.put("BUILDING_" + buildingId, building) ;
+       	    mGeofencePrefs.setGeofence(buildingId, geofence);
+            mCurrentGeofences.add(geofence.toGeofence());
+            buildingGeofences.add(geofence.toGeofence()) ;
+
+     }
+
+       // Start the request. Fail if there's already a request in progress
+        try {
+               // add geofences
+	       mGeofenceRequester.addGeofences(buildingGeofences);
+	       Log.d(GeofenceUtils.APPTAG, "requesting adding of building geofence list items") ;
+
+            } catch (UnsupportedOperationException e) 
+	      {
+                 // Notify user that previous request hasn't finished.
+                 Toast.makeText(this, R.string.add_geofences_already_requested_error,  Toast.LENGTH_LONG).show();
+              }
+     } 
 
 
      private void addConversationGeofences(String conversationsJSONStr)
@@ -984,11 +1245,11 @@ private boolean servicesConnected() {
 
 	}catch (ParseException e)
 	 {
-	   Log.e(GeofenceUtils.APPTAG, e.getMessage()) ;
+	   Log.e(GeofenceUtils.APPTAG, "Could not parse convoArray from String: " + conversationsJSONStr + " Caused by: " +  e.getMessage()) ;
            Toast.makeText(this, "Could not parse conversation file",  Toast.LENGTH_LONG).show();
            return ; 
 	 }
-
+         ArrayList convoGeofences = new ArrayList<Geofence>();
          for(int i = 0 ; i < conversations.length ; i++)
 	 {
             Convo convo = conversations[i] ;
@@ -1008,14 +1269,15 @@ private boolean servicesConnected() {
             mConvos.put("CONVO_" + convoName, convo) ;
        	    mGeofencePrefs.setGeofence(convoName, geofence);
             mCurrentGeofences.add(geofence.toGeofence());
+            convoGeofences.add(geofence.toGeofence());
 	 }			         	
 				
        // Start the request. Fail if there's already a request in progress
         try {
                // add geofences
-
-	       mGeofenceRequester.addGeofences(mCurrentGeofences);
-	       Log.d(GeofenceUtils.APPTAG, "requesting adding of geofence list items") ;
+               // TODO add just convo geofences
+	       mGeofenceRequester.addGeofences(convoGeofences);
+	       Log.d(GeofenceUtils.APPTAG, "requesting adding of convo geofence list items") ;
 
             } catch (UnsupportedOperationException e) 
 	      {
@@ -1051,6 +1313,7 @@ private boolean servicesConnected() {
 
 	}
 
+        ArrayList backgroundGeofences = new ArrayList<Geofence>();
 	for (int i=0; i < jArray.length(); i++)
 	{
                 JSONObject backgroundObject = null;
@@ -1107,7 +1370,7 @@ private boolean servicesConnected() {
                                 // TODO set stored prefs values for track, loop, vary_volume
             			mGeofencePrefs.setGeofence(track, geofence);
        	    			mCurrentGeofences.add(geofence.toGeofence());
-			         	
+       	    			backgroundGeofences.add(geofence.toGeofence());
 				
 			}
 			else
@@ -1121,8 +1384,9 @@ private boolean servicesConnected() {
            // Start the request. Fail if there's already a request in progress
            try {
                // Try to add geofences
-               mGeofenceRequester.addGeofences(mCurrentGeofences);
-	       Log.d(GeofenceUtils.APPTAG, "requesting adding of geofence list items") ;
+                // TODO add just backgound geofences
+               mGeofenceRequester.addGeofences(backgroundGeofences);
+	       Log.d(GeofenceUtils.APPTAG, "requesting adding of background geofence list items") ;
 
                } catch (UnsupportedOperationException e) {
                  // Notify user that previous request hasn't finished.
@@ -1226,6 +1490,19 @@ private boolean servicesConnected() {
        
    }
 
+
+   private class DownloadBuildingsJSONTask extends AsyncTask<String, Void, String> {
+        @Override
+        protected String doInBackground(String... uri) {
+              
+                return getLocalJSON(uri[0]);
+        }
+        // onPostExecute displays the results of the AsyncTask.
+        @Override
+        protected void onPostExecute(String result) {
+            addBuildingsGeofences(result);
+       }
+    }
 
    private class DownloadConversationsAudioJSONTask extends AsyncTask<String, Void, String> {
         @Override
@@ -1335,12 +1612,37 @@ private boolean servicesConnected() {
 		   Log.d(GeofenceUtils.APPTAG, "GeofenceSampleReceiver.handleGeofenceTransition: processing convo " + geofenceId) ;
 		   handleConversationTransition(geofenceId, transitionType, context) ; 
 	      }
+              else if(geofenceId.startsWith("BUILDING")) // TODO not good solution need to get a geofence convo type somehow 
+	      {      
+		   Log.d(GeofenceUtils.APPTAG, "GeofenceSampleReceiver.handleGeofenceTransition: processing building " + geofenceId) ;
+		   handleBuildingTransition(geofenceId, transitionType, context) ; 
+	      }
 	      else 
 	      {
 			   Log.d(GeofenceUtils.APPTAG, "GeofenceSampleReceiver.handleGeofenceTransition: processing background audio" + geofenceId ) ;
 			   handleBackgroundAudioTransition(geofenceId, transitionType) ;
 	      }
             }
+
+	 }
+
+
+         private void handleBuildingTransition(String geofenceId, String transitionType, Context context)
+	 {
+	    if("Entered".equals(transitionType) || "Exited".equals(transitionType))
+	    {
+
+              String transitionFlag = "Entered".equals(transitionType) ? "ENTER" : "EXIT";  ;  
+		   Building building = mBuildings.get(geofenceId) ;
+		   
+		   if(building != null)
+		   {
+                       Toast.makeText(context, transitionType + " building:" + building.getName(), Toast.LENGTH_SHORT).show();
+		       BuildingGeofenceVisitor buildingVisitor = new BuildingGeofenceVisitor(building,  mActivity, transitionFlag ) ;
+		      building.accept(buildingVisitor) ; 
+
+		   }
+	    }
 
 	 }
 
@@ -1401,8 +1703,6 @@ private boolean servicesConnected() {
 		  }
      	       }
 
-               //   TODO this goes into Visitor GeofenceDialogFragment alert = new GeofenceDialogFragment();
-	       //   alert.show(getFragmentManager(), "GeofenceEventFragment") ;
 	    }
             else if("Exited".equals(transitionType))
 	    {

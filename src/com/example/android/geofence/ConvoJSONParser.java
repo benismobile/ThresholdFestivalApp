@@ -170,7 +170,7 @@ public class ConvoJSONParser
    {
        if(onCompleteObj.has("dialog"))
        {
-	 Dialog dialog = parseDialog(onCompleteObj.getJSONObject("dialog")) ;
+	 Dialog dialog = parseDialog(onCompleteObj) ;
 	 return new OnComplete(dialog) ;
        }
        else if(onCompleteObj.has("audio"))
@@ -206,7 +206,10 @@ public class ConvoJSONParser
 
    private static Dialog parseDialog(JSONObject dialogObj) throws ParseException, JSONException
    {
-      if(!dialogObj.has("options")) throw new ParseException("Invalid dialog object: " + dialogObj, 1) ; 
+      if(!dialogObj.has("dialog")) throw new ParseException("Invalid dialog object: no dialog key" + dialogObj, 1) ; 
+    
+     dialogObj = dialogObj.getJSONObject("dialog") ;  
+     if(!dialogObj.has("options")) throw new ParseException("Invalid dialog object: no options key" + dialogObj, 1) ; 
       
          JSONArray optionsArray = dialogObj.getJSONArray("options") ;
          Option[] options = new Option[optionsArray.length()] ;

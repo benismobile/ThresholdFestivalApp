@@ -1,0 +1,43 @@
+{
+    "buildings": [
+        {
+            "name": "1",
+            "geofence_building": {
+                "id": 1,
+                "lat": 51.6051651,
+                "lon": -0.6384171,
+                "radius": 250,
+                "duration": 1200000,
+                "transitions": [
+                    "ENTER"
+                ]
+            }
+        },
+        {
+            "name": "2",
+            "geofence_building": {
+                "id": 2,
+                "lat": 51.6051651,
+                "lon": -0.6384171,
+                "radius": 250,
+                "duration": 1200000,
+                "transitions": [
+                    "ENTER"
+                ]
+            }
+        },
+        {
+            "name": "3",
+            "geofence_building": {
+                "id": 3,
+                "lat": 51.6051651,
+                "lon": -0.6384171,
+                "radius": 250,
+                "duration": 1200000,
+                "transitions": [
+                    "ENTER"
+                ]
+            }
+        }
+    ]
+}

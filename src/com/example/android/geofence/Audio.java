@@ -71,18 +71,20 @@ public class Audio implements IGeofenceVisitable{
      {
         audioObj.put("id", this.getId() ) ;
         audioObj.put("track", this.getTrack() ) ;
+     
+        if(this.hasOnComplete())
+        {
+           String onCompleteJSONStr = this.getOnComplete().toJSONString() ;
+           JSONObject onCompleteObj = new JSONObject(onCompleteJSONStr) ;
+           audioObj.put("on_complete", onCompleteObj );
+        }
+
      }catch(JSONException e)
        {
 	  return "{" + "\"err\":" + "\"" + e.getMessage() + "\"" + "}" ;
        }
 
      sb.append(audioObj.toString());
-
-     if(hasOnComplete())
-        {
-          sb.append(this.getOnComplete().toJSONString()) ; 
-	}
-
      return sb.toString() ;
 
   }

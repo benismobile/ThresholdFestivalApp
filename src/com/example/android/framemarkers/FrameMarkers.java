@@ -8,6 +8,7 @@ package com.example.android.framemarkers;
 import java.util.Vector;
 
 import android.app.Activity;
+import android.content.Intent ;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.graphics.Color;
@@ -47,11 +48,16 @@ import com.example.android.location.R;
 import com.example.android.framemarkers.sampleappmenu.SampleAppMenu;
 import com.example.android.framemarkers.sampleappmenu.SampleAppMenuGroup;
 import com.example.android.framemarkers.sampleappmenu.SampleAppMenuInterface;
-
+import com.example.android.location.BackgroundAudioService ;
+import android.content.ServiceConnection ;
+import android.content.ComponentName;
+import android.os.Binder ;
+import android.os.IBinder ;
+import android.media.MediaPlayer ;
 
 // The main activity for the FrameMarkers sample. 
 public class FrameMarkers extends Activity implements SampleApplicationControl,
-  SampleAppMenuInterface
+  SampleAppMenuInterface, MediaPlayer.OnCompletionListener, MediaPlayer.OnErrorListener
 {
     private static final String LOGTAG = "FrameMarkers";
     
@@ -77,8 +83,39 @@ public class FrameMarkers extends Activity implements SampleApplicationControl,
     private boolean mFlash = false;
     private boolean mContAutofocus = false;
     private boolean mIsFrontCameraActive = false;
-    
+    private int detected = -1 ;
+ 
     private View mFlashOptionView;
+    private BackgroundAudioService backgroundAudioService ;
+    private boolean mIsBound = false ;
+
+
+    private ServiceConnection mBackgroundAudioServiceConnection = new ServiceConnection() {
+      public void onServiceConnected(ComponentName className, IBinder service) {
+        // This is called when the connection with the service has been
+        // established, giving us the service object we can use to
+        // interact with the service.  Because we have bound to a explicit
+        // service that we know is running in our own process, we can
+        // cast its IBinder to a concrete class and directly access it.
+        backgroundAudioService = ((BackgroundAudioService.LocalBinder) service).getService();
+        mIsBound = true ;
+        // Tell the user about this for our demo.
+        Log.d( LOGTAG, "Connected to BackgroundAudioService") ;
+
+    }
+
+      public void onServiceDisconnected(ComponentName className) {
+        // This is called when the connection with the service has been
+        // unexpectedly disconnected -- that is, its process crashed.
+        // Because it is running in our same process, we should never
+        // see this happen.
+        backgroundAudioService = null;
+        mIsBound = false ;
+        Log.e(LOGTAG, "Disconnected from BackgroundAudioService ERROR") ;
+    }
+
+   };
+
     
     private LoadingDialogHandler loadingDialogHandler = new LoadingDialogHandler(
         this);
@@ -112,6 +149,10 @@ public class FrameMarkers extends Activity implements SampleApplicationControl,
         Log.d(LOGTAG, "loadTextures");
         mIsDroidDevice = android.os.Build.MODEL.toLowerCase().startsWith(
             "droid");
+        Intent startAudioIntent = new Intent(this, com.example.android.location.BackgroundAudioService.class);
+        bindService(startAudioIntent, mBackgroundAudioServiceConnection, this.BIND_AUTO_CREATE);
+
+
     }
     
     // Process Single Tap event to trigger autofocus
@@ -150,7 +191,10 @@ public class FrameMarkers extends Activity implements SampleApplicationControl,
         }
     }
     
-    
+    public void setDetected(int detected)
+    {
+        this.detected = detected ;
+    }    
     // We want to load specific textures from the APK, which we will later use
     // for rendering.
     private void loadTextures()
@@ -162,8 +206,11 @@ public class FrameMarkers extends Activity implements SampleApplicationControl,
             getAssets()));
         mTextures.add(Texture.loadTextureFromApk("FrameMarkers/letter_A.png",
             getAssets()));
+        mTextures.add(Texture.loadTextureFromApk("FrameMarkers/blue.png",
+            getAssets()));
         mTextures.add(Texture.loadTextureFromApk("FrameMarkers/letter_R.png",
             getAssets()));
+       
     }
     
     
@@ -195,6 +242,8 @@ public class FrameMarkers extends Activity implements SampleApplicationControl,
             mGlView.setVisibility(View.VISIBLE);
             mGlView.onResume();
         }
+
+        showToastLong("Find bird and then touch screen to capture it") ;
         
     }
     
@@ -274,7 +323,31 @@ public class FrameMarkers extends Activity implements SampleApplicationControl,
         // Process the Gestures
         if (mSampleAppMenu != null && mSampleAppMenu.processEvent(event))
             return true;
-        
+        if(detected >= 0 ) 
+        { 
+
+            // String track = geofenceAudio.getTrackFromId(detected) ;
+            if(this.backgroundAudioService != null) 
+            {
+              // TODO implement getTrackFromId
+               this.backgroundAudioService.playForeground("notificationbird", this, this) ;
+
+
+               Intent intent = new Intent(this, com.example.android.location.WebViewActivity.class);
+ 	       intent.putExtra("bird",""+detected );
+
+               detected = -1 ;
+               startActivity(intent);
+
+            }
+
+
+	    else
+	    {
+ 	      Log.d(LOGTAG, "can't play track no background audio service" ) ;
+	    }
+        } 
+       
         return mGestureDetector.onTouchEvent(event);
     }
     
@@ -662,7 +735,11 @@ public class FrameMarkers extends Activity implements SampleApplicationControl,
     }
     
     
-    private void showToast(String text)
+    public void showToastLong(String text)
+    {
+        Toast.makeText(this, text, Toast.LENGTH_LONG).show();
+    }
+    public void showToast(String text)
     {
         Toast.makeText(this, text, Toast.LENGTH_SHORT).show();
     }
@@ -672,4 +749,30 @@ public class FrameMarkers extends Activity implements SampleApplicationControl,
     {
         return mIsFrontCameraActive;
     }
+
+    public void onCompletion(MediaPlayer mp)
+    {
+        Log.d(LOGTAG, "MediaPlayer.OnCompletionListener.onComplete called") ;
+        if(mp!=null)
+        {
+           if(this.backgroundAudioService != null)
+           {
+               this.backgroundAudioService.foregroundStopped(); 
+           }
+           else
+           {
+              Log.d(LOGTAG,"cannot foreground stop no background audio service " ) ;
+           }
+        }
+    }
+
+    @Override
+    public boolean onError(MediaPlayer mp, int what, int extra)
+    {
+         mp.reset() ;
+         Log.e(LOGTAG, "Media error state code: " + what ) ;
+         return true ;
+    }
+
+
 }

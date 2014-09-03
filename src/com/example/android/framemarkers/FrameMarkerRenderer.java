@@ -33,6 +33,7 @@ import com.example.android.framemarkers.QObject;
 import com.example.android.framemarkers.CObject;
 import com.example.android.framemarkers.AObject;
 import com.example.android.framemarkers.RObject;
+import com.example.android.framemarkers.TestObject;
 
 // The renderer class for the FrameMarkers sample. 
 public class FrameMarkerRenderer implements GLSurfaceView.Renderer
@@ -62,7 +63,10 @@ public class FrameMarkerRenderer implements GLSurfaceView.Renderer
     private CObject cObject = new CObject();
     private AObject aObject = new AObject();
     private RObject rObject = new RObject();
-    
+    private TestObject testObject = new TestObject();
+
+
+    private int mCurrentDetected = -1 ;    
     
     public FrameMarkerRenderer(FrameMarkers activity,
         SampleApplicationSession session)
@@ -71,7 +75,12 @@ public class FrameMarkerRenderer implements GLSurfaceView.Renderer
         vuforiaAppSession = session;
     }
     
-    
+    public int detected()
+    {
+        return mCurrentDetected ;
+
+    }   
+ 
     // Called when the surface is created or recreated.
     @Override
     public void onSurfaceCreated(GL10 gl, EGLConfig config)
@@ -148,7 +157,19 @@ public class FrameMarkerRenderer implements GLSurfaceView.Renderer
             "texSampler2D");
     }
     
-    
+    private void onDetected(int fmID)
+    {
+
+       if(this.mCurrentDetected != fmID)
+       {
+
+          Log.d(LOGTAG, "detected id: " + fmID) ;
+          this.mCurrentDetected = fmID ;
+          mActivity.setDetected(fmID) ;
+
+       }
+    }
+   
     void renderFrame()
     {
         // Clear color and depth buffer
@@ -158,6 +179,7 @@ public class FrameMarkerRenderer implements GLSurfaceView.Renderer
         // section
         State state = Renderer.getInstance().begin();
         
+
         // Explicitly render the Video Background
         Renderer.getInstance().drawVideoBackground();
         
@@ -212,6 +234,7 @@ public class FrameMarkerRenderer implements GLSurfaceView.Renderer
                     indices = qObject.getIndices();
                     texCoords = qObject.getTexCoords();
                     numIndices = qObject.getNumObjectIndex();
+                    onDetected(0) ;
                     break;
                 case 1:
                     vertices = cObject.getVertices();
@@ -219,6 +242,7 @@ public class FrameMarkerRenderer implements GLSurfaceView.Renderer
                     indices = cObject.getIndices();
                     texCoords = cObject.getTexCoords();
                     numIndices = cObject.getNumObjectIndex();
+                    onDetected(1) ;
                     break;
                 case 2:
                     vertices = aObject.getVertices();
@@ -226,6 +250,15 @@ public class FrameMarkerRenderer implements GLSurfaceView.Renderer
                     indices = aObject.getIndices();
                     texCoords = aObject.getTexCoords();
                     numIndices = aObject.getNumObjectIndex();
+                    onDetected(2) ;
+                    break;
+               case 3:
+                    vertices = testObject.getVertices();
+                    normals = testObject.getNormals();
+                    indices = testObject.getIndices();
+                    texCoords = testObject.getTexCoords();
+                    numIndices = testObject.getNumObjectIndex();
+                    onDetected(2) ;
                     break;
                 default:
                     vertices = rObject.getVertices();

@@ -1,0 +1,1 @@
+{"dialog":{"options":[{"audio":{"track":"convo1ablock4","id":1},"option":"I'm from the other side of the Rift, pleased to meet you."},{"audio":{"track":"convo1ablock2","id":2,"on_complete":{"audio":{"track":"convo1ablock4","id":21}}},"option":"What's it to you Tin Man?"},{"audio":{"track":"convo1ablock3","id":3},"option":"Just a visitor. Why are you smashing other robots?"}]}}

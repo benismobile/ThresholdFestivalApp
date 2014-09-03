@@ -10,7 +10,7 @@ public interface IGeofenceVisitor{
    public void visit(Audio audio) ;
    public void visit(GeofenceNullVisitable nullVisited) ;
    public Dialog getActiveDialog() ;
-
+   
 
 
 

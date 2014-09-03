@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset=utf-8 />
+<title>A Simple Map</title>
+
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no' />
+<script src='https://api.tiles.mapbox.com/mapbox.js/v1.6.1/mapbox.js'></script>
+<link href='https://api.tiles.mapbox.com/mapbox.js/v1.6.1/mapbox.css' rel='stylesheet' />
+
+<style>
+  body { margin:0; padding:0; }
+  #map { position:absolute; top:0; bottom:0; width:100%; }
+</style>
+</head>
+<body>
+<div id='map'></div>
+ 
+<div id='legend-content' style='display: none;'>
+  <div class='my-legend'>
+  <div class='legend-title'>Achievements</div>
+  <div class='legend-scale'>
+    <ul class='legend-labels'>
+      <li class='nobird'></li>
+      <li class='nobird'></li>
+      <li class='nobird'></li>
+    </ul>
+    <ul class='legend-lablel'>
+       <li class='nogerms'></li>
+    </ul>
+  </div>
+  </div>
+ 
+<style type='text/css'>
+    .my-legend .legend-title {
+      text-align: left;
+      margin-bottom: 8px;
+      font-weight: bold;
+      font-size: 90%;
+      }
+    .my-legend .legend-scale ul {
+      margin: 0;
+      padding: 0;
+      float: left;
+      list-style: none;
+      }
+    .my-legend .bird {
+      background-image:url('../img/birdie.jpg'); 
+      background-color:#F1EEF6;
+      opacity:1.0;
+      display: block;
+      float: left;
+      width: 64px;
+      height:48px;
+      margin-bottom: 6px;
+      margin-right: 2px;
+      text-align: center;
+      font-size: 80%;
+      list-style: none;
+      }
+    .my-legend .nobird {
+      background-image:url('../img/birdie.jpg'); 
+      background-color:#F1EEF6;
+      opacity:0.4;
+      display: block;
+      float: left;
+      width: 64px;
+      height:48px;
+      margin-bottom: 6px;
+      margin-right: 2px;
+      text-align: center;
+      font-size: 80%;
+      list-style: none;
+      }
+    .my-legend .germs {
+      background-image:url('../img/germs.jpg'); 
+      background-color:#F1EEF6;
+      opacity:1.0;
+      display: block;
+      float: left;
+      width: 64px;
+      height:48px;
+      margin-bottom: 6px;
+      margin-right: 2px;
+      text-align: center;
+      font-size: 80%;
+      list-style: none;
+      }
+    .my-legend .nogerms {
+      background-image:url('../img/germs.jpg'); 
+      background-color:#F1EEF6;
+      opacity:0.4;
+      display: block;
+      float: left;
+      width: 64px;
+      height:48px;
+      margin-bottom: 6px;
+      margin-right: 2px;
+      text-align: center;
+      font-size: 80%;
+      list-style: none;
+      }
+    .my-legend ul.legend-labels li span {
+      display: block;
+      float: left;
+      height: 15px;
+      width: 64px;
+      }
+    .my-legend .legend-source {
+      font-size: 70%;
+      color: #999;
+      clear: both;
+      }
+    .my-legend a {
+      color: #777;
+      }
+  </style>
+</div>
+
+
+<script>
+
+var map = L.mapbox.map('map', 'gradiustheguide.h3380imc')
+    .setView([53.3956, -2.9783], 17);
+
+var imageUrl = '../img/ffmap.jpg' ;
+var imageBounds = [[53.392945, -2.984848], [53.398792, -2.976286]];
+
+var imgOverlay = L.imageOverlay(imageUrl, imageBounds).addTo(map);
+imgOverlay.setOpacity(0.8) ;
+var myIcon = L.icon({
+	iconSize: [30, 36],
+	iconUrl: '../img/astro2.png'
+});
+
+
+var marker = L.marker([53.3956, -2.9783], {icon: myIcon}).addTo(map);
+
+  //  map.legendControl.addLegend(document.getElementById('legend-content').innerHTML);
+
+
+function getLocation() {
+        
+    latlonObj = JSON.parse(Android.getLocation());
+    var latlng = L.latLng(latlonObj.lat, latlonObj.lon);
+    map.panTo(latlng);	
+                
+ 
+
+};
+
+
+function addDisease()
+{
+
+
+
+}
+
+function addBird()
+{
+    var nobird = map.getContainer().querySelector('.nobird') ;
+    if(nobird != null)
+    {
+        nobird.className = "bird" ;
+    }
+
+}
+
+function showLegend() {
+
+map.legendControl.addLegend(document.getElementById('legend-content').innerHTML);
+}
+
+function removeLegend() {
+
+map.legendControl.removeLegend(document.getElementById('legend-content').innerHTML);
+}
+
+function onLocationUpdateP(latlonStr)
+{
+
+    
+    var latlonObj = JSON.parse(latlonStr)
+    var latlng = L.latLng(latlonObj.lat, latlonObj.lon);
+
+	
+    marker.setLatLng(latlng) ;
+// or just go to Liverpool
+  //  latlng = L.latLng(53.3956, -2.9783);
+ //     map.panTo(latlng);	        
+	
+};
+
+
+
+</script>
+</body>
+</html>

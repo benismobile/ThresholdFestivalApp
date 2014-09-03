@@ -161,7 +161,7 @@ public class ReceiveTransitionsIntentService extends IntentService {
                                transitionType, ids))
                .setContentText(getString(R.string.geofence_transition_notification_text))
                .setContentIntent(notificationPendingIntent)
-	       .setDefaults(Notification.DEFAULT_VIBRATE);
+	       .setDefaults(Notification.DEFAULT_VIBRATE | Notification.DEFAULT_SOUND);
 
         // Get an instance of the Notification manager
         NotificationManager mNotificationManager =

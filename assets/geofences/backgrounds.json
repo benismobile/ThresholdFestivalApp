@@ -11,7 +11,7 @@
                     "ENTER",
                     "EXIT"
                 ],
-                "track": "sleepaway",
+                "track": "backgroundambientarea",
                 "loop": false,
                 "vary_volume": true
             }
@@ -27,7 +27,7 @@
                     "ENTER",
                     "EXIT"
                 ],
-                "track": "factory",
+                "track": "backgroundcomsumersphere",
                 "loop": false,
                 "vary_volume": true
             }

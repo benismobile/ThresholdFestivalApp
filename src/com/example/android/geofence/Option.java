@@ -7,7 +7,7 @@ public class Option implements IGeofenceVisitable{
 
    private final String option ;
    private final Audio audio ;
-
+// TODO add GeofenceAudio
    public Option(String option, Audio audio)
    {
       this.option = option ;
@@ -45,6 +45,9 @@ public class Option implements IGeofenceVisitable{
      JSONObject optionObj = new JSONObject() ;
      try
      {
+       String audioJSONStr = this.audio.toJSONString() ;
+       JSONObject audioObj = new JSONObject(audioJSONStr) ;
+       optionObj.put("audio", audioObj) ;
        optionObj.put("option", this.option) ;
      }catch(JSONException e)
         {
@@ -53,8 +56,6 @@ public class Option implements IGeofenceVisitable{
         }
      StringBuilder sb = new StringBuilder() ;
      sb.append(optionObj.toString()) ;
-     
-     sb.append(this.audio.toJSONString()) ;
      return sb.toString() ;
 
    }

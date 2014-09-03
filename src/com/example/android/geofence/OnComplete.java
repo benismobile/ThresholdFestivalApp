@@ -2,6 +2,8 @@ package com.example.android.geofence ;
 
 import java.lang.reflect.Method ;
 import java.lang.reflect.InvocationTargetException ;
+import org.json.JSONObject ;
+import org.json.JSONException ;
 
 public class OnComplete implements IGeofenceVisitable{
 
@@ -62,8 +64,22 @@ public class OnComplete implements IGeofenceVisitable{
   @Override
   public String toJSONString()
   {
-     return this.visitable.toJSONString() ;
+     StringBuilder sb = new StringBuilder() ;
+     JSONObject onCompleteObj = new JSONObject() ;
 
+     String visitableJSONStr = this.visitable.toJSONString() ;
+
+     try
+     {
+        JSONObject visitableObj = new JSONObject(visitableJSONStr) ;
+        String className = this.visitable.getClass().getSimpleName() ;
+        onCompleteObj.put(className.toLowerCase() , visitableObj) ;     
+     }catch(JSONException e)
+      {
+        return "\"err\":" + e.getMessage() ;
+      } 
+     sb.append(onCompleteObj.toString()) ;
+     return sb.toString() ;
   }
 
 }

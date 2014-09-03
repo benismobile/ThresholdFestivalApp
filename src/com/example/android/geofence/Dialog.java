@@ -1,5 +1,8 @@
 package com.example.android.geofence ;
 
+import org.json.JSONObject ;
+import org.json.JSONArray ;
+import org.json.JSONException ;
 
 public class Dialog implements IGeofenceVisitable{
 
@@ -42,22 +45,28 @@ public class Dialog implements IGeofenceVisitable{
    {
         
       StringBuilder sb = new StringBuilder() ;
-      sb.append("[") ;
-
-      for(int i = 0 ; i < this.options.length ; i++ )
+      JSONObject dialog = new JSONObject() ;
+      JSONObject options = new JSONObject() ;
+      try
       {
-         Option option = this.options[i] ;
+         JSONArray optionsAryObj = new JSONArray() ;
          
-	 String optionStr = option.toJSONString() ;
-	 sb.append(optionStr) ;
+         for(int i = 0 ; i < this.options.length ; i++ )
+         {
+            Option option = this.options[i] ;
+	    String optionStr = option.toJSONString() ;
+            JSONObject optionObj = new JSONObject(optionStr) ;
+            optionsAryObj.put(optionObj) ;
+  	 }
+         options.put("options", optionsAryObj) ;
+	 dialog.put("dialog", options) ;
+         sb.append(dialog.toString()) ;         
 
-         if (i < options.length -1 ) 
-	 {
-	    sb.append(",") ;
-	 } 
+      }catch(JSONException e)
+       {
+          return "\"err\":" + e.getMessage() ;
+       }
 
-      }
-      sb.append("]") ;
       return sb.toString() ;
     
    }
