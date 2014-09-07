@@ -42,15 +42,23 @@ public class TestObject extends MeshObject
         InputStream inputStream = null ;
         try
         {
-           inputStream = assets.open("Framemarkers/bird8.obj", AssetManager.ACCESS_BUFFER);
-           String[] assetsList = assets.list("Framemarkers/bird8.obj") ;
+           inputStream = assets.open("FrameMarkers/bird8.obj", AssetManager.ACCESS_BUFFER);
+           String[] assetsList = assets.list("FrameMarkers") ;
            String[] locales = assets.getLocales() ;
-           Log.d("TestObject", "assetsList:" + assetsList) ;
-           Log.d("TestObject", "locales:" + locales ) ;
-        }catch(java.io.IOException ioe) { Log.d("TestObject", "could not get metadata for object" ) ; }
+           Log.d("TestObject", "assetsList:" + assetsList.length) ;
+           Log.d("TestObject", "assetsList item 0:" + assetsList[0]) ;
+           Log.d("TestObject", "inputStream:" + inputStream) ;
+          
+           Log.d("TestObject", "locales:" + locales.length ) ;
+           Log.d("TestObject", "locales index 0:" + locales[0] ) ;
+           
+           
+        }catch(java.io.IOException ioe) { Log.d("TestObject", "could not get metadata for object: " + ioe ) ; }
         // String assetStr = assetsList[0] ; 
-        // WavefrontObject wfobj = new WavefrontObject(inputStream) ;
-        mVertBuff = fillBuffer(letterVertices);
+         WavefrontObject wfobj = new WavefrontObject(assets, "FrameMarkers/bird8.obj") ;
+        ArrayList<Group> groups = wfobj.getGroups() ;
+
+        mVertBuff = fillBuffer();
         mTexCoordBuff = fillBuffer(letterTexcoords);
         mNormBuff = fillBuffer(letterNormals);
         mIndBuff = fillBuffer(letterIndices);

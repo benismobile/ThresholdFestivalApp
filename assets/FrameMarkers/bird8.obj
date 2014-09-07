@@ -1,6 +1,6 @@
 # Blender v2.69 (sub 0) OBJ File: ''
 # www.blender.org
-mtllib bird8.mtl
+mtllib FrameMarkers/bird8.mtl
 o Plane01
 v 1.102633 -0.413737 2.027121
 v 1.095533 -0.420374 1.835135
