@@ -46,9 +46,23 @@ public class MaterialFileParser extends LineParser {
 			}
 			catch(Exception e2)
 			{
+                                System.out.println("Could not find material file at " + pathToMTL ) ;
 				e2.printStackTrace();
 			}
-		
+                if(fileInput == null) 
+                      try
+                      {
+
+			    fileInput = object.assetManager.open(filename) ;	
+
+
+                     }
+                     catch(Exception e3)
+                     {
+                                System.out.println("Could not find material file at " + pathToMTL ) ;
+
+
+                     }		
 		String currentLine = null;
 		try 
 		{

@@ -2,7 +2,7 @@ package com.obj.parser.mtl;
 
 
 import com.obj.Texture;
-import com.obj.TextureLoader;
+// import com.obj.TextureLoader;
 import com.obj.Material;
 import com.obj.WavefrontObject;
 import com.obj.parser.LineParser;
@@ -33,8 +33,11 @@ public class KdMapParser extends LineParser {
 	public void parse() {
 		String textureFileName = words[words.length-1];
 		texName = textureFileName;
-		String pathToTextureBinary = object.getContextfolder() +  textureFileName;
-		texture = TextureLoader.instance().loadTexture(pathToTextureBinary);
+             //   if(object.getContextfolder() != null) 
+             //   {
+	//	   String pathToTextureBinary = object.getContextfolder() +  textureFileName;
+	//	   texture = TextureLoader.instance().loadTexture(pathToTextureBinary);
+          //      }
 	}
 
 }

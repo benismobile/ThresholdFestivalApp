@@ -10,6 +10,7 @@ import java.util.Hashtable;
 import com.obj.Vertex;
 import com.obj.parser.LineParser;
 import com.obj.parser.obj.ObjLineParserFactory;
+import android.content.res.AssetManager;
 
 //import engine.Engine;
 import utils.Logger;
@@ -25,7 +26,7 @@ public class WavefrontObject {
 	private Hashtable<String,Group> groupsDirectAccess = new Hashtable<String,Group>();
 	Hashtable<String, Material> materials = new Hashtable<String, Material>(); 
 	public String fileName;
-	
+        public AssetManager assetManager ;	
 	private ObjLineParserFactory parserFactory ;
 
 	private Material currentMaterial;
@@ -49,9 +50,9 @@ public class WavefrontObject {
 		this(fileName,1f,1f,1f,new Vertex(),new Vertex());
 	}
 	
-	public WavefrontObject(InputStream is)
+	public WavefrontObject(AssetManager assets, String filename)
 	{
-		this(is,1f,1f,1f,new Vertex(),new Vertex());
+		this(assets, filename,1f,1f,1f,new Vertex(),new Vertex());
 	}
 
 	public WavefrontObject(String fileName,float xScale, float yScale, float zScale)
@@ -101,14 +102,16 @@ public class WavefrontObject {
 	}
 
 	
-	public WavefrontObject(InputStream is,float xScale, float yScale, float zScale, Vertex translation,Vertex rotation)
+	public WavefrontObject(AssetManager assets, String filename,float xScale, float yScale, float zScale, Vertex translation,Vertex rotation)
 	{
 		try
 		{      
 
                         // String fileName = is.
-			// this.fileName = fileName;
-			
+			// this.fileName = "/home/vagrant/Downloads/greencube/bird8.obj" ;
+                        this.assetManager = assets ;
+                        InputStream is = this.assetManager.open(filename) ;
+	                // this.contextfolder = "/home/vagrant/Downloads/greencube/" ;		
 			this.translate = translation;
 			this.rotate= rotation;
 			
@@ -172,6 +175,7 @@ public class WavefrontObject {
 		
 	public void parse(InputStream fileInput) {
   
+		parserFactory = new ObjLineParserFactory(this);
 		BufferedReader in = null;
 		
 		try 
@@ -195,7 +199,7 @@ public class WavefrontObject {
 
 		if (Logger.logging)
 		{
-			Logger.log("Loaded OBJ from local file '"+fileName+"'");
+			Logger.log("Loaded OBJ from llocal file '"+fileName+"'");
 			Logger.log(getVertices().size()+" vertices.");
 			Logger.log(getNormals().size()+" normals.");
 			Logger.log(getTextures().size()+" textures coordinates.");
@@ -206,7 +210,7 @@ public class WavefrontObject {
 
 	private void parseLine(String currentLine) {
 		
-		//System.out.println("Parsing line:"+lineCounter);
+		// System.out.println("Parsing line:"+currentLine);
 		if ("".equals(currentLine))
 			return;
 		
