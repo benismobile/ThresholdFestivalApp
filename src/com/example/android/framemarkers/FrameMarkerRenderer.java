@@ -63,7 +63,7 @@ public class FrameMarkerRenderer implements GLSurfaceView.Renderer
     private CObject cObject = new CObject();
     private AObject aObject = new AObject();
     private RObject rObject = new RObject();
-    private TestObject testObject = new TestObject();
+    private TestObject testObject = null ; 
 
 
     private int mCurrentDetected = -1 ;    
@@ -73,6 +73,8 @@ public class FrameMarkerRenderer implements GLSurfaceView.Renderer
     {
         mActivity = activity;
         vuforiaAppSession = session;
+
+        testObject =  new TestObject(mActivity.getAssets());
     }
     
     public int detected()

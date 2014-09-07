@@ -6,6 +6,7 @@
 package com.example.android.framemarkers;
 
 import java.nio.Buffer;
+import android.util.Log ;
 import android.content.res.AssetManager ;
 import com.example.android.framemarkers.utils.MeshObject;
 import com.obj.WavefrontObject ;
@@ -38,8 +39,17 @@ public class TestObject extends MeshObject
     
     public TestObject(AssetManager assets)
     {
-        InputStream inputStream = assets.open("Framemarkers/bird8.obj", AssetManager.ACCESS_BUFFER);
-        WavefrontObject wfobj = new WavefrontObject(inputStream) ;
+        InputStream inputStream = null ;
+        try
+        {
+           inputStream = assets.open("Framemarkers/bird8.obj", AssetManager.ACCESS_BUFFER);
+           String[] assetsList = assets.list("Framemarkers/bird8.obj") ;
+           String[] locales = assets.getLocales() ;
+           Log.d("TestObject", "assetsList:" + assetsList) ;
+           Log.d("TestObject", "locales:" + locales ) ;
+        }catch(java.io.IOException ioe) { Log.d("TestObject", "could not get metadata for object" ) ; }
+        // String assetStr = assetsList[0] ; 
+        // WavefrontObject wfobj = new WavefrontObject(inputStream) ;
         mVertBuff = fillBuffer(letterVertices);
         mTexCoordBuff = fillBuffer(letterTexcoords);
         mNormBuff = fillBuffer(letterNormals);

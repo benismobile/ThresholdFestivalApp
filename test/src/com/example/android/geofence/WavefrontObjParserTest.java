@@ -8,6 +8,10 @@ import com.obj.Group ;
 import java.util.Iterator ;
 import com.obj.Vertex ;
 import com.obj.TextureCoordinate ;
+import java.io.File ;
+import java.io.InputStream ;
+import java.io.FileInputStream ;
+import java.io.IOException ;
 
 public class WavefrontObjParserTest extends TestCase {
 
@@ -18,8 +22,12 @@ public class WavefrontObjParserTest extends TestCase {
 	@Override
 	protected void setUp()
 	{ 
-          Logger logger = new Logger() ;
-	  this.wfobj = new WavefrontObject(filename) ;	
+           Logger logger = new Logger() ;
+          try
+          { 
+          FileInputStream fis = new FileInputStream(new File(filename) ) ;
+	  this.wfobj = new WavefrontObject(fis) ;	
+          }catch(IOException ioe) { assertNotNull(this.wfobj) ; }
 	}
 	
 	public void testWaveFrontObj()
@@ -32,7 +40,7 @@ public class WavefrontObjParserTest extends TestCase {
             for(Iterator<Group> i = groups.iterator() ; i.hasNext();)
             {
 		Group group = i.next() ;
-                System.out.println("Printing Group with index count: " + group.indexCount) ;
+                System.out.println("Printing group with index count: " + group.indexCount) ;
                 ArrayList<Vertex> vertices = group.vertices ;
                 assertNotNull(vertices) ;
                 assertTrue(vertices.size() > 0 ) ;
