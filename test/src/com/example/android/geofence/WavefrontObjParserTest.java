@@ -12,7 +12,7 @@ import com.obj.TextureCoordinate ;
 public class WavefrontObjParserTest extends TestCase {
 
 	
-	 private final String filename = "/home/bbutchar/tools/models/bird8.obj";
+	 private final String filename = "/home/vagrant/Downloads/greencube/bird8.obj";
          private WavefrontObject wfobj ;
 	
 	@Override

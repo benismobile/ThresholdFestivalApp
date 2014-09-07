@@ -800,14 +800,15 @@ implements
 	  {
 
 	
-         	 new DownloadBackgroundAudioJSONTask().execute("https://dl.dropboxusercontent.com/u/58768795/ForgottonFutures/backgroundsdev.json");
-         	 new DownloadConversationsAudioJSONTask().execute("https://dl.dropboxusercontent.com/u/58768795/ForgottonFutures/conversations.json");
-         	 new DownloadBuildingsJSONTask().execute("https://dl.dropboxusercontent.com/u/58768795/ForgottonFutures/buildings.json");
+//         	 new DownloadBackgroundAudioJSONTask().execute("https://dl.dropboxusercontent.com/u/58768795/ForgottonFutures/backgroundsdev.json");
+  //       	 new DownloadConversationsAudioJSONTask().execute("https://dl.dropboxusercontent.com/u/58768795/ForgottonFutures/conversations.json");
+    //     	 new DownloadBuildingsJSONTask().execute("https://dl.dropboxusercontent.com/u/58768795/ForgottonFutures/buildings.json");
 
                    
+         	 new DownloadConversationsAudioJSONTask().execute("https://dl.dropboxusercontent.com/u/58768795/ForgottonFutures/conversationskai.json");
 //           new DownloadBackgroundAudioJSONTask().execute("https://dl.dropboxusercontent.com/u/26331961/kai_backgrounds.json");
 
-  //         new DownloadConversationsAudioJSONTask().execute("https://dl.dropboxusercontent.com/u/26331961/conversations.json");
+   //        new DownloadConversationsAudioJSONTask().execute("https://dl.dropboxusercontent.com/u/26331961/conversations.json");
 
           } 
 	  else 
