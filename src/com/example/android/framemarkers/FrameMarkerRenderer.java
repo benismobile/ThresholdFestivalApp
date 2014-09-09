@@ -59,7 +59,7 @@ public class FrameMarkerRenderer implements GLSurfaceView.Renderer
     static private float kLetterScale = 25.0f;
     static private float kLetterTranslate = 25.0f;
     
-    private QObject qObject = new QObject();
+    private QObject qObject = null;
     private CObject cObject = new CObject();
     private AObject aObject = new AObject();
     private RObject rObject = new RObject();
@@ -73,7 +73,7 @@ public class FrameMarkerRenderer implements GLSurfaceView.Renderer
     {
         mActivity = activity;
         vuforiaAppSession = session;
-
+        qObject = new QObject() ;
         testObject =  new TestObject(mActivity.getAssets());
     }
     
@@ -174,6 +174,7 @@ public class FrameMarkerRenderer implements GLSurfaceView.Renderer
    
     void renderFrame()
     {
+        Log.d(LOGTAG, "render frame");
         // Clear color and depth buffer
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
         
@@ -255,12 +256,18 @@ public class FrameMarkerRenderer implements GLSurfaceView.Renderer
                     onDetected(2) ;
                     break;
                case 3:
+                    Log.d(LOGTAG, "id 3:" + testObject);
                     vertices = testObject.getVertices();
+                    Log.d(LOGTAG, "id 3 vertices:" + vertices.remaining());
                     normals = testObject.getNormals();
+                    Log.d(LOGTAG, "id 3 normals:" + normals.remaining());
                     indices = testObject.getIndices();
+                    Log.d(LOGTAG, "id 3 indices:" + indices.remaining());
                     texCoords = testObject.getTexCoords();
+                    Log.d(LOGTAG, "id 3 texcoords:" + texCoords.remaining());
                     numIndices = testObject.getNumObjectIndex();
-                    onDetected(2) ;
+                    Log.d(LOGTAG, "id 3 numIndices:" + numIndices );
+                    onDetected(3) ;
                     break;
                 default:
                     vertices = rObject.getVertices();
@@ -274,7 +281,8 @@ public class FrameMarkerRenderer implements GLSurfaceView.Renderer
             float[] modelViewProjection = new float[16];
             
             if (mActivity.isFrontCameraActive())
-                Matrix.rotateM(modelViewMatrix, 0, 180, 0.f, 1.0f, 0.f);
+            
+          Matrix.rotateM(modelViewMatrix, 0, 180, 0.f, 1.0f, 0.f);
             
             Matrix.translateM(modelViewMatrix, 0, -kLetterTranslate,
                 -kLetterTranslate, 0.f);
@@ -283,13 +291,14 @@ public class FrameMarkerRenderer implements GLSurfaceView.Renderer
             Matrix.multiplyMM(modelViewProjection, 0, vuforiaAppSession
                 .getProjectionMatrix().getData(), 0, modelViewMatrix, 0);
             
-            GLES20.glUseProgram(shaderProgramID);
+              GLES20.glUseProgram(shaderProgramID);
+             // GLES20.PolygonMode(GLES20.GL_FRONT_AND_BACK, GLES20.GL_LINES)  ;
             
             GLES20.glVertexAttribPointer(vertexHandle, 3, GLES20.GL_FLOAT,
                 false, 0, vertices);
             GLES20.glVertexAttribPointer(normalHandle, 3, GLES20.GL_FLOAT,
                 false, 0, normals);
-            GLES20.glVertexAttribPointer(textureCoordHandle, 2,
+             GLES20.glVertexAttribPointer(textureCoordHandle, 2,
                 GLES20.GL_FLOAT, false, 0, texCoords);
             
             GLES20.glEnableVertexAttribArray(vertexHandle);
@@ -301,14 +310,16 @@ public class FrameMarkerRenderer implements GLSurfaceView.Renderer
                 thisTexture.mTextureID[0]);
             GLES20.glUniformMatrix4fv(mvpMatrixHandle, 1, false,
                 modelViewProjection, 0);
-            GLES20.glUniform1i(texSampler2DHandle, 0);
+              GLES20.glUniform1i(texSampler2DHandle, 0);
             GLES20.glDrawElements(GLES20.GL_TRIANGLES, numIndices,
                 GLES20.GL_UNSIGNED_SHORT, indices);
             
+            SampleUtils.checkGLError("FrameMarkers render frame");
             GLES20.glDisableVertexAttribArray(vertexHandle);
             GLES20.glDisableVertexAttribArray(normalHandle);
             GLES20.glDisableVertexAttribArray(textureCoordHandle);
             
+            Log.d(LOGTAG, "finish render frame");
             SampleUtils.checkGLError("FrameMarkers render frame");
             
         }

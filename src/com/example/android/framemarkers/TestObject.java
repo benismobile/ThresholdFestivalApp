@@ -12,30 +12,24 @@ import com.example.android.framemarkers.utils.MeshObject;
 import com.obj.WavefrontObject ;
 import android.content.res.AssetManager;
 import java.io.InputStream;
+import java.util.ArrayList ;
+import com.obj.Group ;
+import java.util.Iterator ;
+import com.obj.Vertex ;
+import com.obj.TextureCoordinate ;
 
 public class TestObject extends MeshObject
 {
-    // Data for drawing the 3D plane as overlay
-    private static final double letterVertices[] = { 
-             };
-    
-    private static final double letterNormals[] = {
-
-
-            };
-    
-    private static final double letterTexcoords[] = 
- {
- };
-    
-    private static final short letterIndices[] = { 
-       };
     
     Buffer mVertBuff;
     Buffer mTexCoordBuff;
     Buffer mNormBuff;
     Buffer mIndBuff;
     
+    double[] flattenedVertices ;   
+    double[] flattenedNormals ;   
+    double[] flattenedTexCoords ;   
+    short[]  convertedIndices ;
     
     public TestObject(AssetManager assets)
     {
@@ -57,11 +51,77 @@ public class TestObject extends MeshObject
         // String assetStr = assetsList[0] ; 
          WavefrontObject wfobj = new WavefrontObject(assets, "FrameMarkers/bird8.obj") ;
         ArrayList<Group> groups = wfobj.getGroups() ;
+        for(Iterator<Group> i = groups.iterator() ; i.hasNext();)
+            {
+                Group group = i.next() ;
+                Log.d("TestObject", "Process Group with index count: " + group.indexCount) ;
 
-        mVertBuff = fillBuffer();
-        mTexCoordBuff = fillBuffer(letterTexcoords);
-        mNormBuff = fillBuffer(letterNormals);
-        mIndBuff = fillBuffer(letterIndices);
+                ArrayList<Vertex> vertices = group.vertices ;
+                Log.d("TestObject", " vertices:" + vertices.size() ) ;
+
+                ArrayList<Vertex> normals = group.normals ;
+                Log.d("TestObject", " normals:" +  normals.size() ) ;
+
+                ArrayList<TextureCoordinate> texcoords = group.texcoords ;
+                Log.d("TestObject", " texcoords:" + texcoords.size() ) ;
+
+
+                ArrayList<Integer> indices = group.indices ;
+                Log.d("TestObject", " indices:" +  indices.size() ) ;
+                int counter = 0 ; 
+                flattenedVertices = new double[vertices.size() * 3] ;   
+
+                for(Iterator<Vertex> j = vertices.iterator() ; j.hasNext();)
+                   {
+                       Vertex vertex = j.next() ;
+                       flattenedVertices[counter] = vertex.getX() ;
+                       counter++ ;
+                       flattenedVertices[counter] = vertex.getY() ;
+                       counter++ ;
+                       flattenedVertices[counter] = vertex.getZ() ;
+                       counter++ ;
+                   }
+                counter = 0 ;
+                flattenedNormals = new double[normals.size() * 3] ;   
+
+                for(Iterator<Vertex> j = normals.iterator() ; j.hasNext();)
+                   {
+                       Vertex normal = j.next() ;
+                       flattenedNormals[counter] = normal.getX() ;
+                       counter++ ;
+                       flattenedNormals[counter] = normal.getY() ;
+                       counter++ ;
+                       flattenedNormals[counter] = normal.getZ() ;
+                       counter++ ;
+                   }
+                 counter = 0 ;
+                 flattenedTexCoords = new double[texcoords.size() * 3] ;
+   
+                 for(Iterator<TextureCoordinate> l = texcoords.iterator() ; l.hasNext();)
+                   {
+                        TextureCoordinate tex = l.next() ;
+                       flattenedTexCoords[counter] = tex.getU()  ;
+                       counter++ ;
+                       flattenedTexCoords[counter] = tex.getV()  ;
+                       counter++ ;
+                       flattenedTexCoords[counter] = tex.getW()  ;
+                       counter++ ;
+
+                   }
+                 counter = 0 ;
+                 convertedIndices = new short[indices.size() ] ;
+
+                  for(Iterator<Integer> m = indices.iterator() ; m.hasNext();)
+                   {
+                        convertedIndices[counter] =  m.next().shortValue() ;                   
+                        counter++ ;
+                   }
+
+             }
+        mVertBuff = fillBuffer(flattenedVertices);
+        mTexCoordBuff = fillBuffer(flattenedTexCoords);
+        mNormBuff = fillBuffer(flattenedNormals);
+        mIndBuff = fillBuffer(convertedIndices);
     }
     
     
@@ -72,7 +132,7 @@ public class TestObject extends MeshObject
         switch (bufferType)
         {
             case BUFFER_TYPE_VERTEX:
-                result = null ; // getVerticesFromFile();
+                result = mVertBuff ;
                 break;
             case BUFFER_TYPE_TEXTURE_COORD:
                 result = mTexCoordBuff;
@@ -88,23 +148,17 @@ public class TestObject extends MeshObject
         return result;
     }
     
-    private double[] getVerticesFromFile()
-    {
-
-            return null ;
-
-    }
 
     @Override
     public int getNumObjectVertex()
     {
-        return letterVertices.length / 3;
+        return flattenedVertices.length / 3;
     }
     
     
     @Override
     public int getNumObjectIndex()
     {
-        return letterIndices.length;
+        return convertedIndices.length;
     }
 }
