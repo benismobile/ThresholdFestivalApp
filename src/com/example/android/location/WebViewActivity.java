@@ -1180,6 +1180,7 @@ private boolean servicesConnected() {
        Log.d(GeofenceUtils.APPTAG, "WebViewActivity:onConnected " + mCurrentGeofences ) ;
     }
 
+   //TODO REFACTOR INTO GeofencePrefs class 
      private void addBuildingsGeofences(String buildingsJSONStr)
      {
         Log.d(GeofenceUtils.APPTAG, "adding buildings geofences" ) ;
@@ -1232,6 +1233,7 @@ private boolean servicesConnected() {
      } 
 
 
+   //TODO REFACTOR INTO GeofencePrefs class 
      private void addConversationGeofences(String conversationsJSONStr)
      {
 
@@ -1294,6 +1296,8 @@ private boolean servicesConnected() {
    
    
    
+   //TODO  REFACTOR INTO GeofencePrefs class 
+   // TODO CREATE A NEW Backgrounds JSONParser 
    private void addBackgroundGeofences(String backgroundJSONStr)
      {
 
@@ -1414,7 +1418,7 @@ private boolean servicesConnected() {
 
     }
 
-
+// REFACTOR INTO WebRequest class
    protected String getLocalJSON(String uri)
    {
 	DefaultHttpClient   httpclient = new DefaultHttpClient(new BasicHttpParams());
@@ -1454,6 +1458,7 @@ private boolean servicesConnected() {
 
 
 
+// REFACTOR INTO WebRequest class
    protected String getWebJSON(String uri)
    {
 	DefaultHttpClient   httpclient = new DefaultHttpClient(new BasicHttpParams());
@@ -1533,7 +1538,7 @@ private boolean servicesConnected() {
        }
     }
 
-
+// TODO : put this into a seperate class
   /**
      * Define a Broadcast receiver that receives updates from connection listeners and
      * the geofence transition service.
@@ -1588,6 +1593,7 @@ private boolean servicesConnected() {
 
         }
 
+        // TODO create geofence transisiton handler   
         /**
          * Report geofence transitions to the UI
          *

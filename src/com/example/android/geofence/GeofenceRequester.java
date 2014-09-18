@@ -109,6 +109,7 @@ public class GeofenceRequester
          * Save the geofences so that they can be sent to Location Services once the
          * connection is available.
          */
+        // change this so we can map geofence ids to a type
         mCurrentGeofences = (ArrayList<Geofence>) geofences;
 
         // If a request is not already in progress
@@ -155,6 +156,7 @@ public class GeofenceRequester
     private void continueAddGeofences() {
 
         // Get a PendingIntent that Location Services issues when a geofence transition occurs
+        // TODO add the type of transition CONVO etc. to mCurrentGeofencesMap which maps geofence ids to types
         mGeofencePendingIntent = createRequestPendingIntent();
 
         // Send a request to add the current geofences
@@ -192,7 +194,8 @@ public class GeofenceRequester
             // In debug mode, log the result
             Log.d(GeofenceUtils.APPTAG, msg);
 
-            // Create an Intent to broadcast to the app
+            // Create an Intent to broadcast to the app this goes to GeofenceBroadcastReceiver
+            // TODO add the extra with geofence type here
             broadcastIntent.setAction(GeofenceUtils.ACTION_GEOFENCES_ADDED)
                            .addCategory(GeofenceUtils.CATEGORY_LOCATION_SERVICES)
                            .putExtra(GeofenceUtils.EXTRA_GEOFENCE_STATUS, msg);
@@ -275,6 +278,8 @@ public class GeofenceRequester
      *
      * @return A PendingIntent for the IntentService that handles geofence transitions.
      */
+
+    // TODO this is where we can add an extra saying what type of geofence background, convo etc.
     private PendingIntent createRequestPendingIntent() {
 
         // If the PendingIntent already exists
