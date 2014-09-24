@@ -23,7 +23,6 @@ public class ConvoGeofenceVisitor implements IGeofenceVisitor, MediaPlayer.OnCom
   private final Convo convo ;
   private final BackgroundAudioService backgroundAudioService ;
   private OnComplete onComplete ;
-  private WebViewActivity.GeofenceSampleReceiver receiver ;
   private WebViewActivity activity;
   private Dialog activeDialog ;
 

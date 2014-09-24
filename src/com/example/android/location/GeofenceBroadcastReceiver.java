@@ -7,10 +7,24 @@ import android.content.Context;
 import android.widget.Toast ;
 import android.util.Log ;
 import com.example.android.geofence.GeofenceUtils;
+// import com.example.android.geofence.ConvoJSONParser ;
+import com.example.android.geofence.ConvoGeofenceVisitor ;
+import com.example.android.geofence.Convo ;
+import com.example.android.location.BackgroundAudioService ;
+
+
 
 
 public class GeofenceBroadcastReceiver extends BroadcastReceiver  {
 
+
+     private WebViewActivity webViewActivity ; 
+
+      public GeofenceBroadcastReceiver(WebViewActivity webViewActivity) 
+      {
+        this.webViewActivity = webViewActivity ;
+      }    
+  
 
        private final String LOGTAG = "GeofenceBroadcastReceiver" ; 
        /*
@@ -19,14 +33,6 @@ public class GeofenceBroadcastReceiver extends BroadcastReceiver  {
         @Override
         public void onReceive(Context context, Intent intent) {
           
-             try
-             {
-             	WebViewActivity webViewActivity = (WebViewActivity) context ;
-             } catch(java.lang.ClassCastException cce) 
-               {
-		  Log.e(LOGTAG, "Could not cast context to WebViewActivity: " + cce.getMessage() ) ;
-                  handleGeofenceError(context, intent) ;
-               }
 
 
             // Check the action code and determine what to do
@@ -135,20 +141,21 @@ public class GeofenceBroadcastReceiver extends BroadcastReceiver  {
          private void handleConversationTransition(String geofenceId, String transitionType, Context context)
          {
 
-            Log.d(LOGTAG, "handleConversationTransition" ) ;
-            /*
+            Log.d(LOGTAG, "handle Conversation Transition" ) ;
+            
             if("Entered".equals(transitionType))
             {
 
-                   mActiveConvo = mConvos.get(geofenceId) ;
+                   Convo mActiveConvo = webViewActivity.activateConvo(geofenceId) ;
+                   BackgroundAudioService mBackgroundAudioService = webViewActivity.getBackgroundAudioService() ;
 
                    if(mActiveConvo != null)
                    {
 
                        Toast.makeText(context, "ACTIVE Convo:" + mActiveConvo.getName(), Toast.LENGTH_SHORT).show();
-                       ConvoGeofenceVisitor geofenceVisitor = new ConvoGeofenceVisitor(mActiveConvo, mBackgroundAudioService, mActivity ) ;
+                       ConvoGeofenceVisitor geofenceVisitor = new ConvoGeofenceVisitor(mActiveConvo, mBackgroundAudioService, webViewActivity ) ;
                        geofenceVisitor.visitConvo() ;
-                       mActiveConvoInProgress = true ;
+                       // mActiveConvoInProgress = true ;
 
                    }
 
@@ -156,11 +163,11 @@ public class GeofenceBroadcastReceiver extends BroadcastReceiver  {
             }
             else if("Exited".equals(transitionType))
             {
-                   mActiveConvo = null ;
-                   mActiveConvoInProgress = false ;
+
+                   webViewActivity.deactivateConvo(geofenceId) ;
+                   // mActiveConvoInProgress = false ;
             }
 
-            */
 
          }
 

@@ -145,7 +145,7 @@ implements
    private DecimalFormat mRadiusFormat;
 
    
-   private GeofenceSampleReceiver mBroadcastReceiver;
+   private GeofenceBroadcastReceiver mBroadcastReceiver;
 
    // An intent filter for the broadcast receiver
    private IntentFilter mIntentFilter;
@@ -277,7 +277,33 @@ implements
 	this.infected = infected ;
         mEditor.putInt("infected", infected) ;
         mEditor.commit() ;	
+   }
+
+   /*
+   * Use a geofence Id to set active Convo
+   *
+   */
+
+   public Convo activateConvo(String geofenceId)
+   {
+        Convo triggeredConvo = mConvos.get(geofenceId) ;
+        mActiveConvo = triggeredConvo ;
+        mActiveConvoInProgress = true ;
+        return mActiveConvo ;
    } 
+
+   public void deactivateConvo(String geofenceId)
+   {
+        mActiveConvo = null ;
+        mActiveConvoInProgress = false ;
+   } 
+
+   public BackgroundAudioService getBackgroundAudioService()
+   {
+       return this.mBackgroundAudioService ;
+
+   }
+
 
    @SuppressLint("NewApi")
    @Override
@@ -330,9 +356,9 @@ implements
   }
 
    // Create a new broadcast receiver to receive updates from the listeners and service
-     mBroadcastReceiver = new GeofenceSampleReceiver();
+     mBroadcastReceiver = new GeofenceBroadcastReceiver(this);
 
-        // Create an intent filter for the broadcast receiver
+        // Create an intent filter for the broadcast receive
         mIntentFilter = new IntentFilter();
 
         // Action for broadcast Intents that report successful addition of geofences
@@ -1538,208 +1564,4 @@ private boolean servicesConnected() {
        }
     }
 
-// TODO : put this into a seperate class
-  /**
-     * Define a Broadcast receiver that receives updates from connection listeners and
-     * the geofence transition service.
-     */
-    public class GeofenceSampleReceiver extends BroadcastReceiver  {
-        /*
-         * Define the required method for broadcast receivers
-         * This method is invoked when a broadcast Intent triggers the receiver
-         */
-        @Override
-        public void onReceive(Context context, Intent intent) {
-
-            // Check the action code and determine what to do
-            String action = intent.getAction();
-
-            // Intent contains information about errors in adding or removing geofences
-            if (TextUtils.equals(action, GeofenceUtils.ACTION_GEOFENCE_ERROR)) {
-
-                handleGeofenceError(context, intent);
-
-            // Intent contains information about successful addition or removal of geofences
-            } else if (
-                    TextUtils.equals(action, GeofenceUtils.ACTION_GEOFENCES_ADDED)
-                    ||
-                    TextUtils.equals(action, GeofenceUtils.ACTION_GEOFENCES_REMOVED)) {
-
-                handleGeofenceStatus(context, intent);
-
-            // Intent contains information about a geofence transition
-            } else if (TextUtils.equals(action, GeofenceUtils.ACTION_GEOFENCE_TRANSITION)) {
-
-                handleGeofenceTransition(context, intent);
-
-            // The Intent contained an invalid action
-            } else {
-                Log.e(GeofenceUtils.APPTAG, getString(R.string.invalid_action_detail, action));
-                Toast.makeText(context, R.string.invalid_action, Toast.LENGTH_LONG).show();
-            }
-        }
-
-        /**
-         * If you want to display a UI message about adding or removing geofences, put it here.
-         *
-         * @param context A Context for this component
-         * @param intent The received broadcast Intent
-         */
-        private void handleGeofenceStatus(Context context, Intent intent) {
-
-
-		// Toast.makeText(context, "GeofenceSampleReceiver:handleGeofenceStatus:" + intent, Toast.LENGTH_SHORT).show() ;
-               Log.d(GeofenceUtils.APPTAG, "GeofenceSampleReceiver:handleGeofenceStatus: " + intent );
-
-        }
-
-        // TODO create geofence transisiton handler   
-        /**
-         * Report geofence transitions to the UI
-         *
-         * @param context A Context for this component
-         * @param intent The Intent containing the transition
-         */
-        private void handleGeofenceTransition(Context context, Intent intent) 
-	{
-
-           Log.d(GeofenceUtils.APPTAG, "GeofenceSampleReceiver:handleGeofenceTransition: " + intent.getStringExtra("TRANSITION_TYPE") );
-           Log.d(GeofenceUtils.APPTAG, "GeofenceSampleReceiver:handleGeofenceTransition: " + intent.getStringArrayExtra("GEOFENCE_IDS") );
-	      
-	   String transitionType = intent.getStringExtra("TRANSITION_TYPE") ;
-	   String[] triggerGeofenceIds = intent.getStringArrayExtra("GEOFENCE_IDS") ;
-              
-	   for(int i = 0 ; i < triggerGeofenceIds.length ; i++)
-           {
-	      String geofenceId = triggerGeofenceIds[i] ;
-	      Log.d(GeofenceUtils.APPTAG, "GeofenceSampleReceiver.handleGeofenceTransition: " + geofenceId ) ;
-
-              if(geofenceId.startsWith("CONVO")) // TODO not good solution need to get a geofence convo type somehow 
-	      {      
-		   Log.d(GeofenceUtils.APPTAG, "GeofenceSampleReceiver.handleGeofenceTransition: processing convo " + geofenceId) ;
-		   handleConversationTransition(geofenceId, transitionType, context) ; 
-	      }
-              else if(geofenceId.startsWith("BUILDING")) // TODO not good solution need to get a geofence convo type somehow 
-	      {      
-		   Log.d(GeofenceUtils.APPTAG, "GeofenceSampleReceiver.handleGeofenceTransition: processing building " + geofenceId) ;
-		   handleBuildingTransition(geofenceId, transitionType, context) ; 
-	      }
-	      else 
-	      {
-			   Log.d(GeofenceUtils.APPTAG, "GeofenceSampleReceiver.handleGeofenceTransition: processing background audio" + geofenceId ) ;
-			   handleBackgroundAudioTransition(geofenceId, transitionType) ;
-	      }
-            }
-
-	 }
-
-
-         private void handleBuildingTransition(String geofenceId, String transitionType, Context context)
-	 {
-	    if("Entered".equals(transitionType) || "Exited".equals(transitionType))
-	    {
-
-              String transitionFlag = "Entered".equals(transitionType) ? "ENTER" : "EXIT";  ;  
-		   Building building = mBuildings.get(geofenceId) ;
-		   
-		   if(building != null)
-		   {
-                       Toast.makeText(context, transitionType + " building:" + building.getName(), Toast.LENGTH_SHORT).show();
-		       BuildingGeofenceVisitor buildingVisitor = new BuildingGeofenceVisitor(building,  mActivity, transitionFlag ) ;
-		      building.accept(buildingVisitor) ; 
-
-		   }
-	    }
-
-	 }
-
-
-
-         private void handleConversationTransition(String geofenceId, String transitionType, Context context)
-	 {
-	    if("Entered".equals(transitionType))
-	    {
-                   
-		   mActiveConvo = mConvos.get(geofenceId) ;
-		   
-		   if(mActiveConvo != null)
-		   {
-
-                       Toast.makeText(context, "ACTIVE Convo:" + mActiveConvo.getName(), Toast.LENGTH_SHORT).show();
-		       ConvoGeofenceVisitor geofenceVisitor = new ConvoGeofenceVisitor(mActiveConvo, mBackgroundAudioService, mActivity ) ;
-		       geofenceVisitor.visitConvo() ;
-		       mActiveConvoInProgress = true ;
-
-		   }
-
-
-	    }
-            else if("Exited".equals(transitionType))
-            {
-		   mActiveConvo = null ; 
-                   mActiveConvoInProgress = false ;
-	    }
-
-	 }
-
-
-	 private void handleBackgroundAudioTransition(String geofenceId, String transitionType)
-	 {
-            SimpleGeofence sgf = mGeofencePrefs.getGeofence(geofenceId);
-            boolean looping = sgf.getLooping() ;  // TODO subclass SimpleGeofence  
-
-            float volume = 0.01f ;
-
-	    if(mLocationClient != null && mLocationClient.isConnected())
-	    {
-               Location location = mLocationClient.getLastLocation() ;
-	       volume = getVolumeFromDistanceBetween(location, sgf) ;
-	       Log.d(GeofenceUtils.APPTAG, "GeofenceSampleReceiver.handleGeofenceTransition VOLUME: " + volume);
-            }
-
-
-	    if("Entered".equals(transitionType))
-	    {
-               Log.d(GeofenceUtils.APPTAG, "GeofenceSampleReceiver.handleGeofenceTransition ENTERED: " + geofenceId ) ;
-     	       if(mIsBound)
-     	       {
-                  if(mBackgroundAudioService!=null)
-		  {	
-	             mBackgroundAudioService.play(geofenceId, looping, volume) ; 
-	             Log.d(GeofenceUtils.APPTAG, "playing audio: " + geofenceId + " with looping:" + looping);
-		  }
-     	       }
-
-	    }
-            else if("Exited".equals(transitionType))
-	    {
-	       Log.d(GeofenceUtils.APPTAG, "GeofenceSampleReceiver.handleGeofenceTransition EXITED: " + geofenceId ) ;
-     	       if(mIsBound)
-     	       {
-                  if(mBackgroundAudioService!=null)
-		  {	
-	             mBackgroundAudioService.stop(geofenceId) ;
-	             Log.d(GeofenceUtils.APPTAG, "stop audio: " + geofenceId);
-		  }
-     	       }
-
-            }
-       	 }
-       
-
-        /**
-         * Report addition or removal errors to the UI, using a Toast
-         *
-         * @param intent A broadcast Intent sent by ReceiveTransitionsIntentService
-         */
-        private void handleGeofenceError(Context context, Intent intent) {
-            String msg = intent.getStringExtra(GeofenceUtils.EXTRA_GEOFENCE_STATUS);
-            Log.e(GeofenceUtils.APPTAG, msg);
-            Toast.makeText(context, msg, Toast.LENGTH_LONG).show();
-        }
-
-	
-
-	
-    }
 }
