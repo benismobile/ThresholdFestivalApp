@@ -151,7 +151,7 @@ public class GeofenceBroadcastReceiver extends BroadcastReceiver  {
 
                    if(mActiveConvo != null)
                    {
-
+                       Log.d(LOGTAG, "ACTIVE Convo:" + mActiveConvo.getName()) ;
                        Toast.makeText(context, "ACTIVE Convo:" + mActiveConvo.getName(), Toast.LENGTH_SHORT).show();
                        ConvoGeofenceVisitor geofenceVisitor = new ConvoGeofenceVisitor(mActiveConvo, mBackgroundAudioService, webViewActivity ) ;
                        geofenceVisitor.visitConvo() ;

@@ -5,7 +5,9 @@ import org.json.JSONArray ;
 import org.json.JSONException ;
 import java.text.ParseException ;
 import com.google.android.gms.location.Geofence;
-
+import java.util.List ;
+import java.util.ArrayList ;
+import java.util.Iterator ;
 
 public class ConvoJSONParser
 {
@@ -202,6 +204,96 @@ public class ConvoJSONParser
       
 
    }
+
+   public static Convo getConvoFromConversationsJSON(String conversationsJSONString, String name)
+   {
+       // lookup convo
+        List<Convo> convoGeofences = generateConvos(conversationsJSONString) ;
+        
+        for(Iterator<Convo> i = convoGeofences.iterator() ;  i.hasNext(); ) 
+        {
+            Convo convo = i.next() ;
+            if(convo.getName().equals(name)) 
+            {
+               return convo ;
+            }
+
+        }
+     
+        return null ;
+   }
+
+  public static List<Convo> generateConvos(String conversationsJSONString)
+  {
+
+        Convo[] conversations ;
+
+        try
+        {
+                conversations = parseConvoArray(conversationsJSONString) ;
+
+        }catch (ParseException e)
+         {
+           return null;
+         }
+
+        ArrayList convos = new ArrayList<Convo>(conversations.length);
+        
+        for(int i = 0 ; i < conversations.length ; i++)
+        {
+           convos.add(conversations[i]) ;
+        }
+ 
+        return convos ;
+  }
+
+
+   public static List<SimpleGeofence> generateConvoGeofences(String conversationsJSONString)
+   {
+
+        // Log.d(GeofenceUtils.APPTAG, "adding Conversations geofences" ) ;
+
+        ArrayList convoGeofences = new ArrayList<SimpleGeofence>();
+        Convo[] conversations ;
+
+        try
+        {
+                conversations = parseConvoArray(conversationsJSONString) ;
+           //     Log.d(GeofenceUtils.APPTAG, "parsed conversations string into " + conversations.length) ;
+
+        }catch (ParseException e)
+         {
+           // Log.e(GeofenceUtils.APPTAG, "Could not parse convoArray from String: " + conversationsJSONStr + " Caused by: " +  e.getMessage()) ;
+           // Toast.makeText(this, "Could not parse conversation file",  Toast.LENGTH_LONG).show();
+           return null;
+         }
+
+
+         for(int i = 0 ; i < conversations.length ; i++)
+         {
+            Convo convo = conversations[i] ;
+//            Log.d(GeofenceUtils.APPTAG, "processing Convo: " + convo ) ;
+            String convoName = convo.getName() ;
+            GeofenceAudio gfAudio = convo.getGeofenceAudio() ;
+
+            SimpleGeofence geofence = new SimpleGeofence(
+            "CONVO_" + convoName,
+            gfAudio.getLatitude(),
+            gfAudio.getLongitude(),
+            gfAudio.getRadius(),
+            gfAudio.getDuration(), // expiration time
+            gfAudio.getTransitions() );
+
+            //  mConvos.put("CONVO_" + convoName, convo) ;
+            // mGeofencePrefs.setGeofence(convoName, geofence);
+            // mCurrentGeofences.add(geofence.toGeofence());
+             convoGeofences.add(geofence);
+         }
+
+        return convoGeofences ;
+   }
+
+
 
 
    private static Dialog parseDialog(JSONObject dialogObj) throws ParseException, JSONException

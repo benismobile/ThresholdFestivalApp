@@ -1263,49 +1263,36 @@ private boolean servicesConnected() {
      private void addConversationGeofences(String conversationsJSONStr)
      {
 
-        Log.d(GeofenceUtils.APPTAG, "adding Conversations geofences" ) ;
+        Log.d(GeofenceUtils.APPTAG, "addConversationsGeofences" ) ;
+        List<SimpleGeofence> convoGeofences = ConvoJSONParser.generateConvoGeofences(conversationsJSONStr) ; // TODO handle null return 
+        ArrayList<Geofence> geofences = new ArrayList<Geofence>(convoGeofences.size()) ;
+        List<Convo> convos = ConvoJSONParser.generateConvos(conversationsJSONStr) ;
 
-	Convo[] conversations ;
-
-        try
-	{
- 		conversations = ConvoJSONParser.parseConvoArray(conversationsJSONStr) ;
-		Log.d(GeofenceUtils.APPTAG, "parsed conversations string into " + conversations.length) ;
-
-	}catch (ParseException e)
-	 {
-	   Log.e(GeofenceUtils.APPTAG, "Could not parse convoArray from String: " + conversationsJSONStr + " Caused by: " +  e.getMessage()) ;
-           Toast.makeText(this, "Could not parse conversation file",  Toast.LENGTH_LONG).show();
-           return ; 
-	 }
-         ArrayList convoGeofences = new ArrayList<Geofence>();
-         for(int i = 0 ; i < conversations.length ; i++)
-	 {
-            Convo convo = conversations[i] ;
-	    Log.d(GeofenceUtils.APPTAG, "processing Convo: " + convo ) ;
-            String convoName = convo.getName() ;
-	    GeofenceAudio gfAudio = convo.getGeofenceAudio() ;
-	    
-
-            SimpleGeofence geofence = new SimpleGeofence(
-            "CONVO_" + convoName,
-            gfAudio.getLatitude(),
-            gfAudio.getLongitude(),  
-            gfAudio.getRadius(), 
-            gfAudio.getDuration(), // expiration time
-            gfAudio.getTransitions() );
-
-            mConvos.put("CONVO_" + convoName, convo) ;
+        for(Iterator<SimpleGeofence> i = convoGeofences.iterator() ; i.hasNext() ;)
+        {
+            SimpleGeofence geofence = i.next() ;
+            String convoName = geofence.getId()  ;
+            Log.d(GeofenceUtils.APPTAG, "geofenceId: " + convoName) ;
        	    mGeofencePrefs.setGeofence(convoName, geofence);
             mCurrentGeofences.add(geofence.toGeofence());
-            convoGeofences.add(geofence.toGeofence());
-	 }			         	
+            geofences.add(geofence.toGeofence());
+        }
+
+        for(Iterator<Convo> j = convos.iterator() ; j.hasNext() ; ) 
+        {
+           Convo convo = j.next() ;
+           String convoName = convo.getName()  ;
+           Log.d(GeofenceUtils.APPTAG, "convoName: " + convoName) ;
+           mConvos.put("CONVO_" + convoName, convo) ;
+
+        } 
+    
 				
        // Start the request. Fail if there's already a request in progress
         try {
                // add geofences
                // TODO add just convo geofences
-	       mGeofenceRequester.addGeofences(convoGeofences);
+	       mGeofenceRequester.addGeofences(geofences);
 	       Log.d(GeofenceUtils.APPTAG, "requesting adding of convo geofence list items") ;
 
             } catch (UnsupportedOperationException e) 
